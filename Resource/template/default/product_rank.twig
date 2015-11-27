@@ -1,0 +1,13 @@
+{#
+ This file is part of EC-CUBE
+
+ Copyright(c) 2000-2015 LOCKON CO.,LTD. All Rights Reserved.
+ http://www.lockon.co.jp/
+
+ For the full copyright and license information, please view the LICENSE
+ file that was distributed with this source code.
+#}
+<p class="item_code">メーカーコード： {{ product_rank_name }}</p>
+{% if product_rank_url %}
+<p class="item_code">メーカーURL： <a href="{{product_rank_url}}" target="_blank">{{ product_rank_url }}</a></p>
+{% endif %}
