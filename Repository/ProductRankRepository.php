@@ -25,6 +25,7 @@ namespace Plugin\ProductRank\Repository;
 
 use Doctrine\ORM\EntityRepository;
 use Eccube\Entity\ProductCategory;
+use Eccube\Entity\Category;
 
 /**
  * ProductRank
@@ -85,9 +86,10 @@ class ProductRankRepository extends EntityRepository
             /** @var \Eccube\Entity\ProductCategory $ProductCategoryUp */
             $ProductCategoryUp = $this->_em->getRepository('\Eccube\Entity\ProductCategory')
                 ->createQueryBuilder('pc')
-                ->where('pc.rank > :rank and pc.category_id = :category_id')
+                ->where('pc.rank > :rank and pc.category_id = :category_id AND pc.product_id != :product_id')
                 ->setParameter('rank', $rank)
                 ->setParameter('category_id', $TargetProductCategory->getCategoryId())
+                ->setParameter('product_id', $TargetProductCategory->getProductId())
                 ->orderBy('pc.rank', 'ASC')
                 ->setMaxResults(1)
                 ->getQuery()
@@ -117,15 +119,17 @@ class ProductRankRepository extends EntityRepository
      * @return bool
      */
     public function down(ProductCategory $TargetProductCategory) {
+
         $this->_em->getConnection()->beginTransaction();
         try {
             $rank = $TargetProductCategory->getRank();
 
             $ProductCategoryDown = $this->_em->getRepository('\Eccube\Entity\ProductCategory')
                 ->createQueryBuilder('pc')
-                ->where('pc.rank < :rank and pc.category_id = :category_id')
+                ->where('pc.rank <= :rank and pc.category_id = :category_id AND pc.product_id != :product_id')
                 ->setParameter('rank', $rank)
                 ->setParameter('category_id', $TargetProductCategory->getCategoryId())
+                ->setParameter('product_id', $TargetProductCategory->getProductId())
                 ->orderBy('pc.rank', 'DESC')
                 ->setMaxResults(1)
                 ->getQuery()
@@ -140,56 +144,40 @@ class ProductRankRepository extends EntityRepository
             $this->_em->flush();
             $this->_em->getConnection()->commit();
 
-            $status = true;
+            return true;
         } catch (\Exception $e) {
             $this->_em->getConnection()->rollback();
             $this->_em->close();
             $this->app->log($e);
         }
+
+        return false;
     }
 
     /**
-     * @param integer $category_id
-     * @param integer $product_id
-     * @param integer $position
+     * @param Category $Category
      * @return bool
-     * @throws NotFoundHttpException
+     * @throws \Doctrine\DBAL\ConnectionException
      */
-    public function moveRank($category_id, $product_id, $position) {
-        $ids = array('category_id' => $category_id, 'product_id' => $product_id);
-
-        $repos = $this->_em->getRepository('\Eccube\Entity\ProductCategory');
-
+    public function renumber(Category $Category)
+    {
         $this->_em->getConnection()->beginTransaction();
         try {
-            // 自身のランクを取得する
-            $ProductCategory = $repos->findOneBy($ids);
-            if (!$ProductCategory) {
-                throw new NotFoundHttpException();
-            }
-            $oldRank = $ProductCategory->getRank();
+            $ProductCategories = $this->findBySearchData($Category);
 
-            // 最大値取得
-            $qb = $repos->createQueryBuilder('pc');
-            $max = $qb
-                ->select($qb->expr()->max('pc.rank'))
-                ->where($qb->expr()->eq('pc.category_id', $category_id))
-                ->getQuery()
-                ->getSingleScalarResult();
-
-            // 更新するランク値を取得
-            $newRank = $this->getNewRank($position, $max);
-
-            // 他のItemのランクを調整する
-            $ret = $this->moveOtherItemRank($newRank, $oldRank, $repos, $category_id);
-            if ($ret) {
-                // 他のランク変更がある場合のみ処理を行う
-                $ProductCategory->setRank($newRank);
+            $maxRank = count($ProductCategories);
+            $rank = $maxRank;
+            foreach ($ProductCategories as $ProductCategory) {
+                /* @var $ProductCategory \Eccube\Entity\ProduCategory */
+                $ProductCategory = $this->_em->getRepository('\Eccube\Entity\ProductCategory')
+                    ->findOneBy(array('category_id' => $ProductCategory->getCategoryId(), 'product_id' => $ProductCategory->getProductId()));
+                $ProductCategory->setRank($rank);
                 $this->_em->persist($ProductCategory);
-                $this->_em->flush();
-
-                $this->_em->getConnection()->commit();
+                $rank--;
             }
+            $this->_em->flush();
+
+            $this->_em->getConnection()->commit();
 
             return true;
         } catch (\Exception $e) {
@@ -202,56 +190,70 @@ class ProductRankRepository extends EntityRepository
     }
 
     /**
-     * 指定した順位の商品から移動させる商品までのrankを１つずらす
-     *
-     * @param  int     $newRank
-     * @param  int     $oldRank
-     * @param  SC_Query  $objQuery
-     * @param string $tableName
-     * @param string $addWhere
-     * @return boolean
+     * @param ProductCategory $TargetProductCategory
+     * @param $position
+     * @return bool
+     * @throws \Doctrine\DBAL\ConnectionException
      */
-    public function moveOtherItemRank($newRank, $oldRank, $repos, $category_id)
-    {
-        $qb = $repos->createQueryBuilder('pc');
-        $qb->update();
-        $qb->where($qb->expr()->eq('pc.category_id', $category_id));
-        if ($newRank > $oldRank) {
-            //位置を上げる場合、他の商品の位置を1つ下げる（ランクを1下げる）
-            $qb->set('pc.rank', 'pc.rank - 1');
-            $qb->andWhere($qb->expr()->between('pc.rank', $oldRank + 1, $newRank));
-        } elseif ($newRank < $oldRank) {
-            //位置を下げる場合、他の商品の位置を1つ上げる（ランクを1上げる）
-            $qb->set('pc.rank', 'pc.rank + 1');
-            $qb->andWhere($qb->expr()->between('pc.rank', $newRank, $oldRank - 1));
-        } else {
-            //入れ替え先の順位が入れ替え元の順位と同じ場合なにもしない
-            return false;
+    public function moveRank(ProductCategory $TargetProductCategory, $position) {
+        $repos = $this->_em->getRepository('\Eccube\Entity\ProductCategory');
+
+        $this->_em->getConnection()->beginTransaction();
+        try {
+            $oldRank = $TargetProductCategory->getRank();
+
+            // 最大値取得
+            $qb = $repos->createQueryBuilder('pc');
+            $max = $qb
+                ->select($qb->expr()->max('pc.rank'))
+                ->where($qb->expr()->eq('pc.category_id', $TargetProductCategory->getCategoryId()))
+                ->getQuery()
+                ->getSingleScalarResult();
+
+            $position = $max - ($position - 1);
+            $position = max(1, $position);
+            $TargetProductCategory->setRank($position);
+            $status = true;
+            if ($position != $oldRank) {
+                // 他のItemのランクを調整する
+                if ($position < $oldRank) {
+                    // down
+                    $this->_em->createQueryBuilder()
+                        ->update('\Eccube\Entity\ProductCategory', 'pc')
+                        ->set('pc.rank', 'pc.rank + 1')
+                        ->where('pc.rank <= :oldRank AND pc.rank >= :rank AND pc.category_id = :category_id AND pc.product_id != :product_id')
+                        ->setParameter('oldRank', $oldRank)
+                        ->setParameter('rank', $position)
+                        ->setParameter('category_id', $TargetProductCategory->getCategoryId())
+                        ->setParameter('product_id', $TargetProductCategory->getProductId())
+                        ->getQuery()
+                        ->execute();
+                } else {
+                    // up
+                    $this->_em->createQueryBuilder()
+                        ->update('\Eccube\Entity\ProductCategory', 'pc')
+                        ->set('pc.rank', 'pc.rank - 1')
+                        ->where('pc.rank >= :oldRank AND pc.rank <= :rank AND pc.category_id = :category_id AND pc.product_id != :product_id')
+                        ->setParameter('oldRank', $oldRank)
+                        ->setParameter('rank', $position)
+                        ->setParameter('category_id', $TargetProductCategory->getCategoryId())
+                        ->setParameter('product_id', $TargetProductCategory->getProductId())
+                        ->getQuery()
+                        ->execute();
+                }
+                $this->_em->persist($TargetProductCategory);
+
+                $this->_em->flush();
+            }
+            $this->_em->getConnection()->commit();
+
+            return $status;
+        } catch (\Exception $e) {
+            $this->_em->getConnection()->rollback();
+            $this->_em->close();
+            $this->app->log($e);
         }
 
-        $qb->getQuery()->execute();
-        return true;
-    }
-
-    /**
-     * 指定された位置の値をDB用のRANK値に変換する
-     * 指定位置が1番目に移動なら、newRankは最大値
-     * 指定位置が1番下へ移動なら、newRankは1
-     *
-     * @param  int $position 指定された位置
-     * @param  int $maxRank  現在のランク最大値
-     * @return int $newRank DBに登録するRANK値
-     */
-    private function getNewRank($position, $maxRank)
-    {
-        if ($position > $maxRank) {
-            $newRank = 1;
-        } else if ($position < 1) {
-            $newRank = $maxRank;
-        } else {
-            $newRank = $maxRank - $position + 1;
-        }
-
-        return $newRank;
+        return false;
     }
 }

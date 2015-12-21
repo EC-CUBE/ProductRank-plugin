@@ -11,13 +11,11 @@
 
 namespace Plugin\ProductRank\Controller;
 
-use Doctrine\ORM\QueryBuilder;
-use Eccube\Entity\Category;
-use Plugin\ProductRank\Form\Type\ProductRankType;
 use Eccube\Application;
 use Eccube\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception as HttpException;
+use Doctrine\ORM\EntityNotFoundException;
 
 class ProductRankController extends AbstractController
 {
@@ -34,7 +32,7 @@ class ProductRankController extends AbstractController
             // カテゴリが選択されている場合は親になるカテゴリを取得しておく
             $Parent = $app['eccube.repository.category']->find($category_id);
             if (!$Parent) {
-                throw new NotFoundHttpException();
+                throw new EntityNotFoundException();
             }
         } else {
             $Parent = null;
@@ -62,6 +60,7 @@ class ProductRankController extends AbstractController
             'TopCategories' => $TopCategories,
             'TargetCategory' => $TargetCategory,
             'category_count' => $category_count,
+            'category_id' => $category_id,
         ));
     }
 
@@ -73,11 +72,16 @@ class ProductRankController extends AbstractController
         $TargetProductCategory = $em->getRepository('\Eccube\Entity\ProductCategory')
             ->findOneBy(array('category_id' => $category_id, 'product_id' => $product_id));
         if (!$TargetProductCategory) {
-            throw new NotFoundHttpException();
+            throw new EntityNotFoundException();
         }
 
         $status = $app['eccube.plugin.product_rank.repository.product_rank']
-            ->up($TargetProductCategory);
+            ->renumber($TargetProductCategory->getCategory());
+
+        if ($status === true) {
+            $status = $app['eccube.plugin.product_rank.repository.product_rank']
+                ->up($TargetProductCategory);
+        }
 
         if ($status === true) {
             $app->addSuccess('admin.product_rank.up.complete', 'admin');
@@ -95,13 +99,19 @@ class ProductRankController extends AbstractController
         $em = $app['orm.em'];
         $repos = $em->getRepository('\Eccube\Entity\ProductCategory');
 
+        /* @var $ProductCategory \Eccube\Entity\ProductCategory */
         $TargetProductCategory = $repos->findOneBy(array('category_id' => $category_id, 'product_id' => $product_id));
         if (!$TargetProductCategory) {
-            throw new NotFoundHttpException();
+            throw new EntityNotFoundException();
         }
 
         $status = $app['eccube.plugin.product_rank.repository.product_rank']
-            ->down($TargetProductCategory);
+            ->renumber($TargetProductCategory->getCategory());
+
+        if ($status === true) {
+            $status = $app['eccube.plugin.product_rank.repository.product_rank']
+                ->down($TargetProductCategory);
+        }
 
         if ($status === true) {
             $app->addSuccess('admin.product_rank.down.complete', 'admin');
@@ -112,23 +122,41 @@ class ProductRankController extends AbstractController
         return $app->redirect($app->url('admin_product_product_rank_show', array('category_id' => $category_id)));
     }
 
+
     public function moveRank(Application $app, Request $request)
     {
-        $pos = $request->get("new_rank");
-        $category_id = $request->get("category_id");
-        if (ctype_digit(strval($pos))) {
-            $product_id = $request->get("product_id");
+        $category_id = intval($request->get('category_id'));
+        $product_id = intval($request->get('product_id'));
+        $position = intval($request->get('position'));
 
+        $em = $app['orm.em'];
+
+        $Category = $app['eccube.repository.category']->find($category_id);
+        $status = $app['eccube.plugin.product_rank.repository.product_rank']
+            ->renumber($Category);
+
+        $repos = $em->getRepository('\Eccube\Entity\ProductCategory');
+
+        $TargetProductCategory = $repos->findOneBy(array('category_id' => $category_id, 'product_id' => $product_id));
+        if (!$TargetProductCategory) {
+            throw new EntityNotFoundException();
+        }
+        if ($status === true) {
             $status = $app['eccube.plugin.product_rank.repository.product_rank']
-                ->moveRank($category_id, $product_id, $pos);
-
-            if ($status === true) {
-            } else {
-                $app->addError('admin.product_rank.move_rank.error', 'admin');
-            }
+                ->moveRank($TargetProductCategory, $position);
         }
 
-        return $app->redirect($app->url('admin_product_product_rank_show', array('category_id' => $category_id)));
+        if ($request->isXmlHttpRequest()) {
+            return $status;
+        } else {
+            if ($status === true) {
+                $app->addSuccess('admin.product_rank.down.complete', 'admin');
+            } else {
+                $app->addError('admin.product_rank.down.error', 'admin');
+            }
+
+            return $app->redirect($app->url('admin_product_product_rank_show', array('category_id' => $category_id)));
+        }
     }
 
 }
