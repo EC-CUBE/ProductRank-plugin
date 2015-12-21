@@ -33,39 +33,61 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
     <script src="{{ app.config.admin_urlpath }}/assets/js/vendor/jquery.ui/jquery.ui.sortable.min.js"></script>
     <script>
         $(function() {
-            var oldRanks = [];
-            // 画面の中のrank一覧を保持
-            $("div.tableish > .item_box").each(function() {
-                oldRanks.push(this.dataset.rank);
-            });
-            // rsort
-            oldRanks.sort(function(a,b){return a - b;}).reverse();
 
-            $("div.tableish").sortable({
+            var setupContextMenu = function($children) {
+                var childrenMax = $children.size() - 1;
+                $children.each(function(index, obj) {
+                    // up表示切替
+                    if (index > 0) {
+                        $(this).find(".admin_product_product_rank_up").show();
+                    } else {
+                        $(this).find(".admin_product_product_rank_up").hide();
+                    }
+                    if (index < childrenMax) {
+                        $(this).find(".admin_product_product_rank_down").show();
+                    } else {
+                        $(this).find(".admin_product_product_rank_down").hide();
+                    }
+                });
+            };
+
+            setupContextMenu($("div.tableish > .item_box"));
+
+            $("#product_rank_list > div.tableish").sortable({
                 items: '> .item_box',
                 cursor: 'move',
                 update: function(e, ui) {
                     $("body").append($('<div class="modal-backdrop in"></div>'));
+                    var $children = $(ui.item).parent().children();
                     updateRank(ui.item);
                 }
             });
 
+            // 並び替え後にrankを更新
             var updateRank = function(item) {
-                // 並び替え後にrankを更新
+                var position = $(item).parent().children().index(item) + 1;
                 $.ajax({
                     url: '{{ url('admin_product_product_rank_move_rank') }}',
                     type: 'POST',
                     data: {
-                        'category_id': item.data('category-id'),
+                        'category_id': '{{ category_id }}',
                         'product_id': item.data('product-id'),
-                        'new_rank': item.index() + 1,
+                        'position': position,
                     },
                 }).done(function(data) {
                     console.log(data);
                     $(".modal-backdrop").remove();
+                    if (data != true) {
+                        alert('{{ 'admin.product_rank.move_rank.error'|trans }}');
+                        $("#product_rank_list > div.tableish").sortable('cancel');
+                    } else {
+                        setupContextMenu($children);
+                    }
                 }).fail(function() {
                     console.log('fail');
                     $(".modal-backdrop").remove();
+                    alert('{{ 'admin.product_rank.move_rank.error'|trans }}');
+                    $("#product_rank_list > div.tableish").sortable('cancel');
                 });
             };
 
@@ -89,9 +111,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
                 $item = $(this).parents(".item_box");
                 $form.append($('<input type="hidden" name="category_id"></input>').val($item.data("category-id")));
                 $form.append($('<input type="hidden" name="product_id"></input>').val($item.data("product-id")));
-                $form.append($('<input type="hidden" name="new_rank"></input>').val($(this).siblings(".product_rank_move_rank_input").val()));
+                $form.append($('<input type="hidden" name="position"></input>').val($(this).siblings(".product_rank_move_rank_input").val()));
                 $form.submit();
             });
+
         });
     </script>
 {% endblock %}
@@ -112,7 +135,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
                 </div>
                 {% if ProductCategorys|length > 0 %}
                     <div class="box-body no-padding no-border">
-                        <div class="sortable_list">
+                        <div id="product_rank_list" class="sortable_list">
                             <div class="tableish">
 
                                 {% for ProductCategory in ProductCategorys %}
@@ -153,16 +176,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
                                                         <li>
                                                             <input class="product_rank_move_rank_input" type="text" class="form-control" />
                                                             <a class="product_rank_move_rank_anchor" href="javascript:void(0);">番目へ移動</a></li>
-                                                        {% if loop.first == false %}
                                                             <li>
-                                                                <a href="{{ url('admin_product_product_rank_up', {category_id: ProductCategory.category_id, product_id: ProductCategory.product_id}) }}"  {{ csrf_token_for_anchor() }} data-method="put" data-confirm="false">上へ</a>
+                                                                <a class="admin_product_product_rank_up" href="{{ url('admin_product_product_rank_up', {category_id: ProductCategory.category_id, product_id: ProductCategory.product_id}) }}"  {{ csrf_token_for_anchor() }} data-method="put" data-confirm="false">上へ</a>
                                                             </li>
-                                                        {% endif %}
-                                                        {% if loop.last == false %}
                                                             <li>
-                                                                <a href="{{ url('admin_product_product_rank_down', {category_id: ProductCategory.category_id, product_id: ProductCategory.product_id}) }}"  {{ csrf_token_for_anchor() }} data-method="put" data-confirm="false">下へ</a>
+                                                                <a class="admin_product_product_rank_down" href="{{ url('admin_product_product_rank_down', {category_id: ProductCategory.category_id, product_id: ProductCategory.product_id}) }}"  {{ csrf_token_for_anchor() }} data-method="put" data-confirm="false">下へ</a>
                                                             </li>
-                                                        {% endif %}
                                                     </ul>
                                                 </div>
                                             </div>

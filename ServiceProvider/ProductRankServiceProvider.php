@@ -69,6 +69,9 @@ class ProductRankServiceProvider implements ServiceProviderInterface
             ->bind('admin_product_product_rank_down');
         // 一覧：N番目へ移動
         $app->post($basePath . '/product/product_rank/moveRank', '\\Plugin\\ProductRank\\Controller\\ProductRankController::moveRank')
+            ->assert('category_id', '\d+')
+            ->assert('product_id', '\d+')
+            ->assert('position', '\d+')
             ->bind('admin_product_product_rank_move_rank');
         // カテゴリ選択
         $app->match($basePath . '/product/product_rank/{category_id}', '\\Plugin\\ProductRank\\Controller\\ProductRankController::index')
