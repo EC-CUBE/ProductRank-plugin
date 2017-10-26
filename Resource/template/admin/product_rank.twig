@@ -112,6 +112,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
                 $form.append($('<input type="hidden" name="category_id"></input>').val($item.data("category-id")));
                 $form.append($('<input type="hidden" name="product_id"></input>').val($item.data("product-id")));
                 $form.append($('<input type="hidden" name="position"></input>').val($(this).siblings(".product_rank_move_rank_input").val()));
+                $('body').append($form);
                 $form.submit();
             });
 
