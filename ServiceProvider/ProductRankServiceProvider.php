@@ -24,7 +24,7 @@ class ProductRankServiceProvider implements ServiceProviderInterface
      * @param array $addNavi 追加するナビ配列
      * @param array $ids 追加するナビのid配列
      */
-    private static function addNavi(array &$nav, array $addNavi, array $ids = array())
+    public static function addNavi(array &$nav, array $addNavi, array $ids = array())
     {
         $targetId = array_shift($ids);
         if (!$targetId) {
@@ -96,7 +96,7 @@ class ProductRankServiceProvider implements ServiceProviderInterface
             $addNavi['name'] = "商品並び替え";
             $addNavi['url'] = "admin_product_product_rank";
 
-            self::addNavi($config['nav'], $addNavi, array('product'));
+            ProductRankServiceProvider::addNavi($config['nav'], $addNavi, array('product'));
 
             return $config;
         }));
