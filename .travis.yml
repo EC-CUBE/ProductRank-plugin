@@ -12,7 +12,10 @@ php:
   - 5.4
   - 5.5
   - 5.6
-#  - 7.0
+  - 7.0
+  - 7.1
+
+dist: precise
 
 env:
   # plugin code
@@ -22,10 +25,10 @@ env:
 #    # ec-cube master
     - ECCUBE_VERSION=master DB=mysql USER=root DBNAME=myapp_test DBPASS=' ' DBUSER=root
     - ECCUBE_VERSION=master DB=pgsql USER=postgres DBNAME=myapp_test DBPASS=password DBUSER=postgres
-    - ECCUBE_VERSION=3.0.9 DB=mysql USER=root DBNAME=myapp_test DBPASS=' ' DBUSER=root
-    - ECCUBE_VERSION=3.0.9 DB=pgsql USER=postgres DBNAME=myapp_test DBPASS=password DBUSER=postgres
-    - ECCUBE_VERSION=3.0.10 DB=mysql USER=root DBNAME=myapp_test DBPASS=' ' DBUSER=root
-    - ECCUBE_VERSION=3.0.10 DB=pgsql USER=postgres DBNAME=myapp_test DBPASS=password DBUSER=postgres
+#     - ECCUBE_VERSION=3.0.9 DB=mysql USER=root DBNAME=myapp_test DBPASS=' ' DBUSER=root
+#     - ECCUBE_VERSION=3.0.9 DB=pgsql USER=postgres DBNAME=myapp_test DBPASS=password DBUSER=postgres
+    - ECCUBE_VERSION=3.0.15 DB=mysql USER=root DBNAME=myapp_test DBPASS=' ' DBUSER=root
+    - ECCUBE_VERSION=3.0.15 DB=pgsql USER=postgres DBNAME=myapp_test DBPASS=password DBUSER=postgres
 
 matrix:
   fast_finish: true
@@ -52,6 +55,7 @@ before_script:
 script:
   # exec phpunit on ec-cube
   - phpunit app/Plugin/${PLUGIN_CODE}/Tests
+  - if [[ $PHP_SAPI != 'phpdbg' ]]; then ./vendor/bin/phpunit -c app/Plugin/${PLUGIN_CODE}/phpunit.xml.dist --coverage-clover=coverage.clover ; fi
 
 after_script:
   # disable plugin
