@@ -9,8 +9,16 @@ use Knp\Component\Pager\Event\ItemsEvent;
 
 class EventSubscriber implements EventSubscriberInterface
 {
+    /**
+     * @var Event
+     */
     protected $event;
 
+    /**
+     * EventSubscriber constructor.
+     *
+     * @param Event $event
+     */
     public function __construct(
         Event $event
     ) {
