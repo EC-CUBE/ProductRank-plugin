@@ -11,9 +11,28 @@
 
 namespace Plugin\ProductRank\Tests\Web\Admin;
 
+use Eccube\Tests\Web\Admin\AbstractAdminWebTestCase;
+use Eccube\Repository\ProductCategoryRepository;
 
-class ProductRankControllerTest extends ProductRankCommon
+
+class ProductRankControllerTest extends AbstractAdminWebTestCase
 {
+
+    /**
+     * @var ProductCategoryRepository
+     */
+    protected $productCategoryRepository;
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setUp()
+    {
+        parent::setUp();
+
+        $this->productCategoryRepository = $this->container->get(ProductCategoryRepository::class);
+    }
+
     /**
      * @param $categoryId
      * @param $expected
@@ -22,9 +41,15 @@ class ProductRankControllerTest extends ProductRankCommon
     public function testRoutingIndex($categoryId, $expected)
     {
         if (is_null($categoryId)) {
-            $crawler = $this->client->request('GET', $this->app->url('admin_product_product_rank'));
+            $crawler = $this->client->request(
+                'GET',
+                $this->generateUrl('admin_product_product_rank')
+            );
         } else {
-            $crawler = $this->client->request('GET', $this->app->url('admin_product_product_rank_show', array('category_id' => $categoryId)));
+            $crawler = $this->client->request(
+                'GET',
+                $this->generateUrl('admin_product_product_rank_show', ['category_id' => $categoryId])
+            );
         }
 
         $this->assertTrue($this->client->getResponse()->isSuccessful());
@@ -37,18 +62,18 @@ class ProductRankControllerTest extends ProductRankCommon
 
     public function dataIndexProvider()
     {
-        return array(
-            array(null, 'カテゴリを選択してください。'),
-            array(1, 'パーコレーター'),
-            array(2, 'インテリア'),
-            array(2, 'カテゴリを選択してください。'),
-            array(3, '食器'),
-            array(3, 'カテゴリを選択してください。'),
-            array(4, '調理器具'),
-            array(4, 'パーコレーター'),
-            array(5, 'フォーク'),
-            array(5, 'ディナーフォーク'),
-        );
+        return [
+            [null, 'カテゴリを選択してください。'],
+            [1, 'キッチンツール'],
+            [2, 'インテリア'],
+            [2, 'カテゴリを選択してください。'],
+            [3, '食器'],
+            [3, 'カテゴリを選択してください。'],
+            [4, '調理器具'],
+            [4, 'パーコレーター'],
+            [5, 'フォーク'],
+            [5, 'ディナーフォーク'],
+        ];
     }
 
     public function testDown()
@@ -57,20 +82,28 @@ class ProductRankControllerTest extends ProductRankCommon
         $categoryId = 6;
         $Product = $this->createProduct('Product003');
 
-        $ProductCategory = $this->app['eccube.plugin.product_rank.repository.product_rank']->find(array('product_id' => $Product->getId(), 'category_id' => $categoryId));
+        $ProductCategory = $this->productCategoryRepository->find([
+            'product_id' => $Product->getId(),
+            'category_id' => $categoryId
+        ]);
 
         // WHEN
-        $this->client->request('PUT', $this->app->url('admin_product_product_rank_down', array('category_id' => $categoryId, 'product_id' => $Product->getId())));
+        $url = $this->generateUrl('admin_product_product_rank_down', [
+            'category_id' => $categoryId,
+            'product_id' => $Product->getId()
+        ]);
+        $this->client->request('PUT', $url);
 
         // check redirect
-        $this->assertTrue($this->client->getResponse()->isRedirect($this->app->url('admin_product_product_rank_show', array('category_id' => $categoryId))));
+        $rUrl = $this->generateUrl('admin_product_product_rank_show', ['category_id' => $categoryId]);
+        $this->assertTrue($this->client->getResponse()->isRedirect($rUrl));
 
         // verify data
-        $ProductCategories = $this->app['eccube.plugin.product_rank.repository.product_rank']->findBy(array('category_id' => $categoryId));
-        $maxRank = count($ProductCategories);
-        $this->expected = $maxRank - 1;
+        $ProductCategories = $this->productCategoryRepository->findBy(array('category_id' => $categoryId));
+        $max = count($ProductCategories);
+        $this->expected = $max - 1;
 
-        $this->actual = $ProductCategory->getRank();
+        $this->actual = $ProductCategory->getSortNo();
         $this->verify();
     }
 
@@ -79,74 +112,101 @@ class ProductRankControllerTest extends ProductRankCommon
         // GIVE
         $categoryId = 6;
         $this->createProduct('Product003');
-        $ProductCategory = $this->app['eccube.plugin.product_rank.repository.product_rank']->find(array('product_id' => 1, 'category_id' => $categoryId));
-        $oldRank = $ProductCategory->getRank();
+        $ProductCategory = $this->productCategoryRepository->find(['product_id' => 1, 'category_id' => $categoryId]);
+        $oldSortNo = $ProductCategory->getSortNo();
 
         // WHEN
-        $this->client->request('PUT', $this->app->url('admin_product_product_rank_up', array('category_id' => $categoryId, 'product_id' => $ProductCategory->getProductId())));
+        $url = $this->generateUrl('admin_product_product_rank_up', [
+            'category_id' => $categoryId,
+            'product_id' => $ProductCategory->getProductId()
+        ]);
+        $this->client->request('PUT', $url);
 
         // check redirect
-        $this->assertTrue($this->client->getResponse()->isRedirect($this->app->url('admin_product_product_rank_show', array('category_id' => $categoryId))));
+        $rUrl = $this->generateUrl('admin_product_product_rank_show', ['category_id' => $categoryId]);
+        $this->assertTrue($this->client->getResponse()->isRedirect($rUrl));
 
         // verify data
-        $this->expected = $oldRank + 1;
+        $this->expected = $oldSortNo + 1;
 
-        $this->actual = $ProductCategory->getRank();
+        $this->actual = $ProductCategory->getSortNo();
         $this->verify();
     }
 
     public function testMoveRank()
     {
         // GIVE
-        $categoryId = 6;
         $Product = $this->createProduct('Product003');
+        $categoryId = $Product->getProductCategories()->current()->getCategoryId();
         $inputRank = 999;
 
         // WHEN
+        $url = $this->generateUrl('admin_product_product_rank_move_rank', [
+            'category_id' => $categoryId,
+            'product_id' => $Product->getId(),
+            'position' => $inputRank
+        ]);
         $this->client->request('POST',
-            $this->app->url('admin_product_product_rank_move_rank',
-                array('category_id' => $categoryId, 'product_id' => $Product->getId(), 'position' => $inputRank)),
-            array('category_id' => $categoryId, 'product_id' => $Product->getId(), 'position' => $inputRank, '_token' => 'dummy')
+            $url,
+            [
+                'category_id' => $categoryId,
+                'product_id' => $Product->getId(),
+                'position' => $inputRank,
+                '_token' => 'dummy'
+            ]
         );
 
         // check redirect
-        $this->assertTrue($this->client->getResponse()->isRedirect($this->app->url('admin_product_product_rank_show', array('category_id' => $categoryId))));
+        $rUrl = $this->generateUrl('admin_product_product_rank_show', ['category_id' => $categoryId]);
+        $this->assertTrue($this->client->getResponse()->isRedirect($rUrl));
 
         // verify data
         $this->expected = 1;
 
-        $ProductCategory = $this->app['eccube.plugin.product_rank.repository.product_rank']->find(array('product_id' => $Product->getId(), 'category_id' => $categoryId));
-        $this->actual = $ProductCategory->getRank();
+        $ProductCategory = $this->productCategoryRepository->find([
+            'product_id' => $Product->getId(),
+            'category_id' => $categoryId
+        ]);
+        $this->actual = $ProductCategory->getSortNo();
         $this->verify();
     }
 
     public function testMoveRankAjax()
     {
         // GIVE
-        $categoryId = 6;
-        $this->createProduct('Product003');
+        $Product = $this->createProduct('Product003');
+        $categoryId = $Product->getProductCategories()->current()->getCategoryId();
         $inputRank = 1;
-        $productId = 1;
-        $ProductCategory = $this->app['eccube.plugin.product_rank.repository.product_rank']->find(array('product_id' => $productId, 'category_id' => $categoryId));
+        $productId = $Product->getId();
+        $ProductCategory = $this->productCategoryRepository->find([
+            'product_id' => $productId,
+            'category_id' => $categoryId
+        ]);
 
         // WHEN
-        $this->client->request('POST',
-            $this->app->url('admin_product_product_rank_move_rank',
-                array('category_id' => $categoryId, 'product_id' => $productId, 'position' => $inputRank)),
-            array('category_id' => $categoryId, 'product_id' => $productId, 'position' => $inputRank, '_token' => 'dummy'),
-            array(),
-            array('HTTP_X-Requested-With' => 'XMLHttpRequest')
+        $url = $this->generateUrl('admin_product_product_rank_move_rank', [
+            'category_id' => $categoryId,
+            'product_id' => $productId,
+            'position' => $inputRank
+        ]);
+        $this->client->request(
+            'POST',
+            $url,
+            ['category_id' => $categoryId, 'product_id' => $productId, 'position' => $inputRank, '_token' => 'dummy'],
+            [],
+            ['HTTP_X-Requested-With' => 'XMLHttpRequest']
         );
 
         // check redirect
-        $this->assertFalse($this->client->getResponse()->isRedirect($this->app->url('admin_product_product_rank_show', array('category_id' => $categoryId))));
+        $rUrl = $this->generateUrl('admin_product_product_rank_show', ['category_id' => $categoryId]);
+        $this->assertFalse($this->client->getResponse()->isRedirect($rUrl));
 
         // verify data
-        $ProductCategories = $this->app['eccube.plugin.product_rank.repository.product_rank']->findBy(array('category_id' => $categoryId));
+        $ProductCategories = $this->productCategoryRepository->findBy(['category_id' => $categoryId]);
         $maxRank = count($ProductCategories);
         $this->expected = $maxRank;
 
-        $this->actual = $ProductCategory->getRank();
+        $this->actual = $ProductCategory->getSortNo();
         $this->verify();
     }
 }

@@ -19,7 +19,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #}
-{% extends 'default_frame.twig' %}
+{% extends '@admin/default_frame.twig' %}
 
 {% set menus = ['product', 'class_category'] %}
 
@@ -27,10 +27,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 {% block sub_title %}商品並び替え{% endblock %}
 
 {% block javascript %}
-    <script src="{{ app.config.admin_urlpath }}/assets/js/vendor/jquery.ui/jquery.ui.core.min.js"></script>
-    <script src="{{ app.config.admin_urlpath }}/assets/js/vendor/jquery.ui/jquery.ui.widget.min.js"></script>
-    <script src="{{ app.config.admin_urlpath }}/assets/js/vendor/jquery.ui/jquery.ui.mouse.min.js"></script>
-    <script src="{{ app.config.admin_urlpath }}/assets/js/vendor/jquery.ui/jquery.ui.sortable.min.js"></script>
+    <script src="{{ asset('assets/js/vendor/jquery.ui/jquery.ui.core.min.js', 'admin') }}"></script>
+    <script src="{{ asset('assets/js/vendor/jquery.ui/jquery.ui.widget.min.js', 'admin') }}"></script>
+    <script src="{{ asset('assets/js/vendor/jquery.ui/jquery.ui.mouse.min.js', 'admin') }}"></script>
+    <script src="{{ asset('assets/js/vendor/jquery.ui/jquery.ui.sortable.min.js', 'admin') }}"></script>
     <script>
         $(function() {
 
@@ -126,7 +126,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
             <div class="box">
                 <div class="box-header">
                     <div class="box-title box-title-category">
-                        <a href="{{ url('admin_product_category') }}">全カテゴリー</a>
+                        <a href="{{ url('admin_product_category') }}">{{ 'admin.product_rank.move_rank.all_category'|trans }}</a>
                         {% for ParentCategory in TargetCategory.path %}
                             {% if ParentCategory.id is not null %}
                                 &nbsp;<svg class="cb cb-angle-right"> <use xlink:href="#cb-angle-right" /></svg>&nbsp;<a href="{{ url('admin_product_product_rank_show', { category_id : ParentCategory.id }) }}">{{ ParentCategory.name }}</a>
@@ -134,14 +134,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
                         {% endfor %}
                     </div>
                 </div>
-                {% if ProductCategorys|length > 0 %}
+                {% if ProductCategories|length > 0 %}
                     <div class="box-body no-padding no-border">
                         <div id="product_rank_list" class="sortable_list">
                             <div class="tableish">
 
-                                {% for ProductCategory in ProductCategorys %}
+                                {% for ProductCategory in ProductCategories %}
 
-                                    <div class="item_box tr" data-rank="{{ ProductCategory.rank }}" data-category-id="{{ ProductCategory.category_id }}" data-product-id="{{ ProductCategory.product_id }}">
+                                    <div class="item_box tr" data-rank="{{ ProductCategory.sort_no }}" data-category-id="{{ ProductCategory.category_id }}" data-product-id="{{ ProductCategory.product_id }}">
                                         <div class="icon_sortable td">
                                             <svg class="cb cb-ellipsis-v"> <use xlink:href="#cb-ellipsis-v" /></svg>
                                         </div>
@@ -152,7 +152,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
                                             <div class="item_photo td">
                                                 <a href="{{ url('admin_product_product_edit', { id : ProductCategory.Product.id }) }}">
-                                                    <img src="{{ app.config.image_save_urlpath }}/{{ ProductCategory.Product.mainFileName|no_image_product }}" />
+                                                    <img src="{{ asset(ProductCategory.Product.mainFileName|no_image_product, 'save_image') }}" />
                                                 </a>
                                             </div>
                                             <div class="item_detail td">
@@ -176,12 +176,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
                                                     <ul class="dropdown-menu dropdown-menu-right">
                                                         <li>
                                                             <input class="product_rank_move_rank_input" type="text" class="form-control" />
-                                                            <a class="product_rank_move_rank_anchor" href="javascript:void(0);">番目へ移動</a></li>
+                                                            <a class="product_rank_move_rank_anchor" href="javascript:void(0);">{{ 'admin.product_rank.move_rank.th'|trans }}</a></li>
                                                             <li>
-                                                                <a class="admin_product_product_rank_up" href="{{ url('admin_product_product_rank_up', {category_id: ProductCategory.category_id, product_id: ProductCategory.product_id}) }}"  {{ csrf_token_for_anchor() }} data-method="put" data-confirm="false">上へ</a>
+                                                                <a class="admin_product_product_rank_up" href="{{ url('admin_product_product_rank_up', {category_id: ProductCategory.category_id, product_id: ProductCategory.product_id}) }}"  {{ csrf_token_for_anchor() }} data-method="put" data-confirm="false">{{ 'admin.product_rank.move_rank.up'|trans }}</a>
                                                             </li>
                                                             <li>
-                                                                <a class="admin_product_product_rank_down" href="{{ url('admin_product_product_rank_down', {category_id: ProductCategory.category_id, product_id: ProductCategory.product_id}) }}"  {{ csrf_token_for_anchor() }} data-method="put" data-confirm="false">下へ</a>
+                                                                <a class="admin_product_product_rank_down" href="{{ url('admin_product_product_rank_down', {category_id: ProductCategory.category_id, product_id: ProductCategory.product_id}) }}"  {{ csrf_token_for_anchor() }} data-method="put" data-confirm="false">{{ 'admin.product_rank.move_rank.down'|trans }}</a>
                                                             </li>
                                                     </ul>
                                                 </div>
@@ -195,7 +195,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
                     </div><!-- /.box-body -->
                 {% else %}
                     <div class="box-body no-padding">
-                        <div class="data-empty"><svg class="cb cb-inbox"> <use xlink:href="#cb-inbox" /></svg><p>カテゴリを選択してください。</p></div>
+                        <div class="data-empty"><svg class="cb cb-inbox"> <use xlink:href="#cb-inbox" /></svg><p>{{ 'admin.product_rank.move_rank.select_category'|trans }}</p></div>
                     </div><!-- /.box-body -->
                 {% endif %}
                 <!-- ▲ データがある時 ▲ -->
@@ -210,9 +210,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
                     {{ Category.name }} ({{ Category.children|length }})
                 </a>
                 {% if Category.children|length > 0 %}
+                    {% import _self as renderMacro %}
                     {% for ChildCategory in Category.children %}
                         <ul>
-                            {{ _self.tree(ChildCategory, TargetId, level) }}
+                            {{ renderMacro.tree(ChildCategory, TargetId, level) }}
                         </ul>
                     {% endfor %}
                 {% endif %}
@@ -225,10 +226,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
                 <div class="box no-header">
                     <div class="box-body">
                         <div class="tree">
-                            <p class="{% if Parent is null %}active{% endif %}"><a href="{{ url('admin_product_product_rank') }}">全カテゴリー</a></p>
+                            <p class="{% if Parent is null %}active{% endif %}"><a href="{{ url('admin_product_product_rank') }}">{{ 'admin.product_rank.move_rank.all_category'|trans }}</a></p>
                             <ul id="category_tree">
+                                {% import _self as renderMacro %}
                                 {% for TopCategory in TopCategories %}
-                                    {{ _self.tree(TopCategory, TargetCategory.Parent.id | default(null), 0)}}
+                                    {{ renderMacro.tree(TopCategory, TargetCategory.Parent.id | default(null), 0)}}
                                 {% endfor %}
                             </ul>
                         </div>
