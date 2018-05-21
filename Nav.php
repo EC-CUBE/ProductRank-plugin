@@ -15,7 +15,7 @@ class Nav implements EccubeNav
         return [
             'product' => [
                 'id' => 'product_rank',
-                'name' => '商品並び替え',
+                'name' => 'admin.product_rank.move_rank.sub_title',
                 'url' => 'admin_product_product_rank'
             ]
         ];
