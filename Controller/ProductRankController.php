@@ -23,6 +23,7 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
 use Eccube\Entity\ProductCategory;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
 
 class ProductRankController extends AbstractController
 {
@@ -71,6 +72,7 @@ class ProductRankController extends AbstractController
      *     name="admin_product_product_rank_show",
      *     requirements={"category_id":"\d+"}
      * )
+     * @Template("@ProductRank/admin/product_rank.twig")
      */
     public function index($category_id = null)
     {
@@ -98,7 +100,7 @@ class ProductRankController extends AbstractController
         $TopCategories = $this->categoryRepository->findBy(['Parent' => null], ['sort_no' => 'DESC']);
         $category_count = $this->categoryRepository->getTotalCount();
 
-        return $this->render('ProductRank/Resource/template/admin/product_rank.twig', [
+        return [
             'Children' => $Children,
             'Parent' => $Parent,
             'ProductCategories' => $ProductCategories,
@@ -106,7 +108,7 @@ class ProductRankController extends AbstractController
             'TargetCategory' => $TargetCategory,
             'category_count' => $category_count,
             'category_id' => $category_id,
-        ]);
+        ];
     }
 
     /**
@@ -120,7 +122,7 @@ class ProductRankController extends AbstractController
      * @throws EntityNotFoundException
      * @throws \Doctrine\DBAL\ConnectionException
      *
-     * @Method("PUT")
+     * @Method("POST")
      * @Route("/%eccube_admin_route%/product/product_rank/{category_id}/{product_id}/up",
      *      name="admin_product_product_rank_up",
      *      requirements={"category_id":"\d+", "product_id":"\d+"}
@@ -165,7 +167,7 @@ class ProductRankController extends AbstractController
      * @throws EntityNotFoundException
      * @throws \Doctrine\DBAL\ConnectionException
      *
-     * @Method("PUT")
+     * @Method("POST")
      * @Route("/%eccube_admin_route%/product/product_rank/{category_id}/{product_id}/down",
      *      name="admin_product_product_rank_down",
      *      requirements={"category_id":"\d+", "product_id":"\d+"}

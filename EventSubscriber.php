@@ -33,24 +33,10 @@ class EventSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents()
     {
         return [
-            EccubeEvents::FRONT_PRODUCT_INDEX_SEARCH => ['onFrontProductIndexSearch', 10],
             'knp_pager.items' => ['onPaginationIterator', 10]
         ];
     }
 
-    /**
-     * Modify query builder order by sort_no
-     *
-     * @param EventArgs $event
-     */
-    public function onFrontProductIndexSearch(EventArgs $event)
-    {
-        try {
-            $this->event->onFrontProductIndexSearch($event);
-        } catch (\Exception $e) {
-            log_error('ProductRank Plugin', [$e]);
-        }
-    }
 
     /**
      * Modify options of pagination

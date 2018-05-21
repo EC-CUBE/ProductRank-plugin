@@ -11,4 +11,6 @@ return [
     'admin.product_rank.move_rank.down' => '下へ',
     'admin.product_rank.move_rank.select_category' => 'カテゴリを選択してください。',
     'admin.product_rank.move_rank.all_category' => '全カテゴリー',
+    'admin.product_rank.move_rank.title' => '商品管理',
+    'admin.product_rank.move_rank.sub_title' => '商品並び替え',
 ];
