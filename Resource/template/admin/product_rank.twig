@@ -19,23 +19,24 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #}
-{% extends 'default_frame.twig' %}
+{% extends '@admin/styleguide_frame.twig' %}
 
-{% set menus = ['product', 'class_category'] %}
+{% set menus = ['product', 'product_rank'] %}
 
-{% block title %}商品管理{% endblock %}
-{% block sub_title %}商品並び替え{% endblock %}
+{% block title %}{{ 'admin.product_rank.move_rank.title'|trans }}{% endblock %}
+{% block sub_title %}{{ 'admin.product_rank.move_rank.sub_title'|trans }}{% endblock %}
+
 
 {% block javascript %}
-    <script src="{{ app.config.admin_urlpath }}/assets/js/vendor/jquery.ui/jquery.ui.core.min.js"></script>
-    <script src="{{ app.config.admin_urlpath }}/assets/js/vendor/jquery.ui/jquery.ui.widget.min.js"></script>
-    <script src="{{ app.config.admin_urlpath }}/assets/js/vendor/jquery.ui/jquery.ui.mouse.min.js"></script>
-    <script src="{{ app.config.admin_urlpath }}/assets/js/vendor/jquery.ui/jquery.ui.sortable.min.js"></script>
+<script src="{{ asset('assets/js/vendor/jquery.ui/jquery.ui.core.min.js', 'admin') }}"></script>
+    <script src="{{ asset('assets/js/vendor/jquery.ui/jquery.ui.widget.min.js', 'admin') }}"></script>
+    <script src="{{ asset('assets/js/vendor/jquery.ui/jquery.ui.mouse.min.js', 'admin') }}"></script>
+    <script src="{{ asset('assets/js/vendor/jquery.ui/jquery.ui.sortable.min.js', 'admin') }}"></script>
     <script>
         $(function() {
 
             var setupContextMenu = function($children) {
-                var childrenMax = $children.size() - 1;
+                var childrenMax = $children.length - 1;
                 $children.each(function(index, obj) {
                     // up表示切替
                     if (index > 0) {
@@ -51,14 +52,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
                 });
             };
 
-            setupContextMenu($("div.tableish > .item_box"));
+            setupContextMenu($(".sortable-container > .sortable-item"));
 
-            $("#product_rank_list > div.tableish").sortable({
-                items: '> .item_box',
+            $("#product_rank_list > .sortable-container").sortable({
+                items: '> .sortable-item',
                 cursor: 'move',
                 update: function(e, ui) {
-                    $("body").append($('<div class="modal-backdrop in"></div>'));
-                    var $children = $(ui.item).parent().children();
+                    $('body').append($('<div class="modal-backdrop show"></div>'));
+                    window.$children = $(ui.item).parent().children();
                     updateRank(ui.item);
                 }
             });
@@ -79,36 +80,23 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
                     $(".modal-backdrop").remove();
                     if (data != true) {
                         alert('{{ 'admin.product_rank.move_rank.error'|trans }}');
-                        $("#product_rank_list > div.tableish").sortable('cancel');
+                        $("#product_rank_list > .sortable-container").sortable('cancel');
                     } else {
-                        setupContextMenu($children);
+                        setupContextMenu(window.$children);
                     }
                 }).fail(function() {
                     console.log('fail');
                     $(".modal-backdrop").remove();
                     alert('{{ 'admin.product_rank.move_rank.error'|trans }}');
-                    $("#product_rank_list > div.tableish").sortable('cancel');
+                    $("#product_rank_list > .sortable-container").sortable('cancel');
                 });
             };
-
-            // カテゴリツリー開閉
-            // 初期表示
-            $("#category_tree li ul").css("display", "none");
-            // 現在地まで拓く
-            $("#category_tree li.active")
-                    .parents("ul")
-                    .css("display", "");
-
-            // クリックでひらく
-            $("#category_tree li svg").on("click", function(){
-                $(this).parent().find("ul").slideToggle(100);
-            });
 
             // ランク移動リンク
             $(".product_rank_move_rank_anchor").on("click", function(e) {
                 e.preventDefault();
                 $form = $('<form action="{{ url('admin_product_product_rank_move_rank') }}" method="POST" style="display:none;"></form>');
-                $item = $(this).parents(".item_box");
+                $item = $(this).parents(".sortable-item");
                 $form.append($('<input type="hidden" name="category_id"></input>').val($item.data("category-id")));
                 $form.append($('<input type="hidden" name="product_id"></input>').val($item.data("product-id")));
                 $form.append($('<input type="hidden" name="position"></input>').val($(this).siblings(".product_rank_move_rank_input").val()));
@@ -121,122 +109,144 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 {% endblock %}
 
 {% block main %}
-    <div class="row">
-        <div class="col-md-9">
-            <div class="box">
-                <div class="box-header">
-                    <div class="box-title box-title-category">
-                        <a href="{{ url('admin_product_category') }}">全カテゴリー</a>
-                        {% for ParentCategory in TargetCategory.path %}
-                            {% if ParentCategory.id is not null %}
-                                &nbsp;<svg class="cb cb-angle-right"> <use xlink:href="#cb-angle-right" /></svg>&nbsp;<a href="{{ url('admin_product_product_rank_show', { category_id : ParentCategory.id }) }}">{{ ParentCategory.name }}</a>
-                            {% endif %}
-                        {% endfor %}
-                    </div>
+    <div class="c-outsideBlock">
+        <div class="c-outsideBlock__contents mb-2">
+            <div class="row">
+                <div class="col-6">
+                    <nav aria-label="breadcrumb" role="navigation">
+                        <ol class="breadcrumb mb-2 p-0">
+                            <li class="breadcrumb-item">
+                                <a href="{{ url('admin_product_category') }}">
+                                    {{ 'admin.product_rank.move_rank.all_category'|trans }}
+                                </a>
+                            </li>
+                            {% for ParentCategory in TargetCategory.path %}
+                                {% if ParentCategory.id is not null %}
+                                    <li class="breadcrumb-item active" aria-current="page">
+                                        <a href="{{ url('admin_product_category_show', { parent_id : ParentCategory.id }) }}">
+                                            {{ ParentCategory.name }}
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                        </ol>
+                    </nav>
                 </div>
-                {% if ProductCategorys|length > 0 %}
-                    <div class="box-body no-padding no-border">
-                        <div id="product_rank_list" class="sortable_list">
-                            <div class="tableish">
-
-                                {% for ProductCategory in ProductCategorys %}
-
-                                    <div class="item_box tr" data-rank="{{ ProductCategory.rank }}" data-category-id="{{ ProductCategory.category_id }}" data-product-id="{{ ProductCategory.product_id }}">
-                                        <div class="icon_sortable td">
-                                            <svg class="cb cb-ellipsis-v"> <use xlink:href="#cb-ellipsis-v" /></svg>
-                                        </div>
-                                        <div class="item_pattern td">
-                                            <div class="item_id td">
-                                                {{ProductCategory.Product.id}}
-                                            </div>
-
-                                            <div class="item_photo td">
-                                                <a href="{{ url('admin_product_product_edit', { id : ProductCategory.Product.id }) }}">
-                                                    <img src="{{ app.config.image_save_urlpath }}/{{ ProductCategory.Product.mainFileName|no_image_product }}" />
-                                                </a>
-                                            </div>
-                                            <div class="item_detail td">
-                                                <a href="{{ url('admin_product_product_edit', { id : ProductCategory.Product.id }) }}">
-                                                    {{ ProductCategory.Product.name }}
-                                                </a><br>
-                                                {% if ProductCategory.Product.code_min is not empty or ProductCategory.Product.code_max is not empty %}
+            </div>
+        </div>
+    </div>
+    <div class="c-contentsArea__cols">
+        <div class="c-contentsArea__primaryCol">
+            <div class="c-primaryCol">
+                {% if ProductCategories|length > 0 %}
+                    <div class="card rounded border-0 mb-4">
+                        <div class="card-body p-0">
+                            <div class="card rounded border-0 mb-2" id="product_rank_list">
+                                <ul class="list-group list-group-flush sortable-container">
+                                    {% for ProductCategory in ProductCategories %}
+                                        <li class="list-group-item sortable-item" data-rank="{{ ProductCategory.sort_no }}" data-category-id="{{ ProductCategory.category_id }}" data-product-id="{{ ProductCategory.product_id }}">
+                                            <div class="row justify-content-around mode-view">
+                                                <div class="col-auto d-flex align-items-center">
+                                                    <i class="fa fa-bars text-ec-gray"></i>
+                                                </div>
+                                                <div class="col-auto d-flex">
+                                                    <a href="{{ url('admin_product_product_edit', { id : ProductCategory.Product.id }) }}">
+                                                        <img src="{{ asset(ProductCategory.Product.mainFileName|no_image_product, 'save_image') }}" style="max-width: 50px" />
+                                                    </a>
+                                                </div>
+                                                <div class="col">
+                                                    <a href="{{ url('admin_product_product_edit', { id : ProductCategory.Product.id }) }}">
+                                                        {{ ProductCategory.Product.name }}
+                                                    </a>
+                                                    <br>
+                                                    {% if ProductCategory.Product.code_min is not empty or ProductCategory.Product.code_max is not empty %}
+                                                        <span>
+                                                            {{ ProductCategory.Product.code_min }}
+                                                            {% if ProductCategory.Product.code_min != ProductCategory.Product.code_max %} ～ {{ ProductCategory.Product.code_max }}
+                                                            {% endif %}
+                                                        </span>
+                                                    {% endif %}
                                                     <span>
-                                                        {{ ProductCategory.Product.code_min }}
-                                                        {% if ProductCategory.Product.code_min != ProductCategory.Product.code_max %} ～ {{ ProductCategory.Product.code_max }}
-                                                        {% endif %}
-                                                    </span><br>
-                                                {% endif %}
-                                                <span>
-                                                    ({{ ProductCategory.Product.status }})
-                                                </span>
-                                            </div>
-                                            <div class="icon_edit td">
-                                                <div class="dropdown">
-                                                    <a class="dropdown-toggle" data-toggle="dropdown"><svg class="cb cb-ellipsis-h"><use xlink:href="#cb-ellipsis-h" /></svg></a>
-                                                    <ul class="dropdown-menu dropdown-menu-right">
-                                                        <li>
-                                                            <input class="product_rank_move_rank_input" type="text" class="form-control" />
-                                                            <a class="product_rank_move_rank_anchor" href="javascript:void(0);">番目へ移動</a></li>
-                                                            <li>
-                                                                <a class="admin_product_product_rank_up" href="{{ url('admin_product_product_rank_up', {category_id: ProductCategory.category_id, product_id: ProductCategory.product_id}) }}"  {{ csrf_token_for_anchor() }} data-method="put" data-confirm="false">上へ</a>
-                                                            </li>
-                                                            <li>
-                                                                <a class="admin_product_product_rank_down" href="{{ url('admin_product_product_rank_down', {category_id: ProductCategory.category_id, product_id: ProductCategory.product_id}) }}"  {{ csrf_token_for_anchor() }} data-method="put" data-confirm="false">下へ</a>
-                                                            </li>
-                                                    </ul>
+                                                        ({{ ProductCategory.Product.status }})
+                                                    </span>
+                                                </div>
+                                                <div class="col-auto text-right">
+                                                    <a class="btn btn-ec-actionIcon action-up mr-3 {% if loop.first %} disabled {% endif %}" href="{{ url('admin_product_product_rank_up', {category_id: ProductCategory.category_id, product_id: ProductCategory.product_id}) }}" {{ csrf_token_for_anchor() }} data-method="PUT" data-confirm="false">
+                                                        <i class="fa fa-arrow-up fa-lg text-secondary"></i>
+                                                    </a>
+                                                    <a class="btn btn-ec-actionIcon action-down mr-3 {% if loop.last %} disabled {% endif %}" href="{{ url('admin_product_product_rank_down', {category_id: ProductCategory.category_id, product_id: ProductCategory.product_id}) }}" {{ csrf_token_for_anchor() }} data-method="put" data-confirm="false">
+                                                        <i class="fa fa-arrow-down fa-lg text-secondary"></i>
+                                                    </a>
+                                                </div>
+                                                <div class="col-auto text-right">
+                                                    <div class="form-inline">
+                                                        <div class="form-group">
+                                                            <input class="product_rank_move_rank_input form-control" type="text" />
+                                                        </div>
+                                                        <a class="btn btn-default product_rank_move_rank_anchor" href="javascript:void(0);">{{ 'admin.product_rank.move_rank.th'|trans }}</a>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div><!-- /.item_box -->
-                                    </div>
-                                {% endfor %}
-
+                                        </li>
+                                    {% endfor %}
+                                </ul>
                             </div>
                         </div>
-                    </div><!-- /.box-body -->
+                    </div>
                 {% else %}
-                    <div class="box-body no-padding">
-                        <div class="data-empty"><svg class="cb cb-inbox"> <use xlink:href="#cb-inbox" /></svg><p>カテゴリを選択してください。</p></div>
-                    </div><!-- /.box-body -->
+                    <div class="card rounded border-0">
+                        <div class="card-body p-4">
+                            <div class="text-center text-muted">{{ 'admin.product_rank.move_rank.select_category'|trans }}</div>
+                        </div>
+                    </div>
                 {% endif %}
-                <!-- ▲ データがある時 ▲ -->
-            </div><!-- /.box -->
-        </div><!-- /.col -->
+            </div>
+        </div>
 
+        {# TODO: 選択中の項目をわかるように表示 #}
         {% macro tree(Category, TargetId, level) %}
+            {% import _self as selfMacro %}
             {% set level = level + 1 %}
-            <li class="level{{ level }} {% if Category.id == TargetId %}active{% endif %}">
-                <svg class="cb cb-plus-square"> <use xlink:href="{% if Category.children|length > 0 %}#cb-plus-square{% else %}#cb-minus-square{% endif %}" /></svg>
-                <a href="{{ url('admin_product_product_rank_show', { category_id : Category.id }) }}">
-                    {{ Category.name }} ({{ Category.children|length }})
-                </a>
+            <li>
+                <label {% if Category.children|length > 0 %}class="collapsed" {% endif %}data-toggle="collapse"
+                       href="#directory_category{{ Category.id }}" aria-expanded="false"
+                       aria-controls="directory_category{{ Category.id }}">
+                    <span>
+                        <a href="{{ url('admin_product_product_rank_show', { category_id : Category.id }) }}">
+                            {{ Category.name }} ({{ Category.children|length }})
+                        </a>
+                    </span>
+                </label>
                 {% if Category.children|length > 0 %}
-                    {% for ChildCategory in Category.children %}
-                        <ul>
-                            {{ _self.tree(ChildCategory, TargetId, level) }}
-                        </ul>
-                    {% endfor %}
+                    <ul class="collapse" id="directory_category{{ Category.id }}">
+                        {% for ChildCategory in Category.children %}
+                            {{ selfMacro.tree(ChildCategory, TargetId, level) }}
+                        {% endfor %}
+                    </ul>
                 {% endif %}
             </li>
         {% endmacro %}
 
-        <div class="col-md-3" id="aside_column">
-            <div class="col_inner">
-
-                <div class="box no-header">
-                    <div class="box-body">
-                        <div class="tree">
-                            <p class="{% if Parent is null %}active{% endif %}"><a href="{{ url('admin_product_product_rank') }}">全カテゴリー</a></p>
-                            <ul id="category_tree">
-                                {% for TopCategory in TopCategories %}
-                                    {{ _self.tree(TopCategory, TargetCategory.Parent.id | default(null), 0)}}
-                                {% endfor %}
-                            </ul>
+        <div class="c-contentsArea__secondaryCol">
+            <div class="c-secondaryCol">
+                <div class="card rounded border-0 mb-4">
+                    <div class="card-header">
+                        <span class="card-title">
+                            <a href="{{ url('admin_product_category') }}">{{ 'admin.product.category.401'|trans }}</a>
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="c-directoryTree mb-3">
+                            {% import _self as renderMacro %}
+                            {% for TopCategory in TopCategories %}
+                                <ul>
+                                    {{ renderMacro.tree(TopCategory, TargetCategory.Parent.id | default(null), 0) }}
+                                </ul>
+                            {% endfor %}
                         </div>
                     </div>
-                </div><!-- /.box -->
-
+                </div>
             </div>
-        </div><!-- /.col -->
-
+        </div>
     </div>
 {% endblock %}

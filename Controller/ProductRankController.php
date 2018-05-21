@@ -11,26 +11,74 @@
 
 namespace Plugin\ProductRank\Controller;
 
-use Eccube\Application;
 use Eccube\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Exception as HttpException;
 use Doctrine\ORM\EntityNotFoundException;
+use Eccube\Repository\CategoryRepository;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use Eccube\Entity\Category;
+use Plugin\ProductRank\Repository\ProductRankRepository;
+use Eccube\Repository\ProductCategoryRepository;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
+use Eccube\Entity\ProductCategory;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
 
 class ProductRankController extends AbstractController
 {
-    private $main_title;
-    private $sub_title;
+    /**
+     * @var CategoryRepository
+     */
+    protected $categoryRepository;
 
-    public function __construct()
-    {
+    /**
+     * @var ProductRankRepository
+     */
+    protected $productRankRepository;
+
+    /**
+     * @var ProductCategoryRepository
+     */
+    protected $productCategoryRepository;
+
+    /**
+     * ProductRankController constructor.
+     *
+     * @param ProductRankRepository $productRankRepository
+     * @param CategoryRepository $categoryRepository
+     * @param ProductCategoryRepository $productCategoryRepository
+     */
+    public function __construct(
+        ProductRankRepository $productRankRepository,
+        CategoryRepository $categoryRepository,
+        ProductCategoryRepository $productCategoryRepository
+    ) {
+        $this->productRankRepository = $productRankRepository;
+        $this->categoryRepository = $categoryRepository;
+        $this->productCategoryRepository = $productCategoryRepository;
     }
 
-    public function index(Application $app, Request $request, $category_id = null)
+    /**
+     * Product rank management
+     *
+     * @param null $category_id
+     * @return mixed
+     *
+     * @throws EntityNotFoundException
+     *
+     * @Route("/%eccube_admin_route%/product/product_rank", name="admin_product_product_rank")
+     * @Route("/%eccube_admin_route%/product/product_rank/{category_id}",
+     *     name="admin_product_product_rank_show",
+     *     requirements={"category_id":"\d+"}
+     * )
+     * @Template("@ProductRank/admin/product_rank.twig")
+     */
+    public function index($category_id = null)
     {
         if ($category_id) {
             // カテゴリが選択されている場合は親になるカテゴリを取得しておく
-            $Parent = $app['eccube.repository.category']->find($category_id);
+            $Parent = $this->categoryRepository->find($category_id);
             if (!$Parent) {
                 throw new EntityNotFoundException();
             }
@@ -38,124 +86,170 @@ class ProductRankController extends AbstractController
             $Parent = null;
         }
 
-        $TargetCategory = new \Eccube\Entity\Category();
+        $TargetCategory = new Category();
         $TargetCategory->setParent($Parent);
         if ($Parent) {
-            $TargetCategory->setLevel($Parent->getLevel() + 1);
+            $TargetCategory->setHierarchy($Parent->getHierarchy() + 1);
         } else {
-            $TargetCategory->setLevel(1);
+            $TargetCategory->setHierarchy(1);
         }
 
-        $Children = $app['eccube.repository.category']->getList(null);
-        $ProductCategorys = $app['eccube.plugin.product_rank.repository.product_rank']
-            ->findBySearchData($Parent);
+        $Children = $this->categoryRepository->getList(null);
+        $ProductCategories = $this->productRankRepository->findBySearchData($Parent);
 
-        $TopCategories = $app['eccube.repository.category']->findBy(array('Parent' => null), array('rank' => 'DESC'));
-        $category_count = $app['eccube.repository.category']->getTotalCount();
+        $TopCategories = $this->categoryRepository->findBy(['Parent' => null], ['sort_no' => 'DESC']);
+        $category_count = $this->categoryRepository->getTotalCount();
 
-        return $app->render('ProductRank/Resource/template/admin//product_rank.twig', array(
+        return [
             'Children' => $Children,
             'Parent' => $Parent,
-            'ProductCategorys' => $ProductCategorys,
+            'ProductCategories' => $ProductCategories,
             'TopCategories' => $TopCategories,
             'TargetCategory' => $TargetCategory,
             'category_count' => $category_count,
             'category_id' => $category_id,
-        ));
+        ];
     }
 
-    public function up(Application $app, Request $request, $category_id, $product_id)
+    /**
+     * Increase rank of product
+     *
+     * @param $category_id
+     * @param $product_id
+     *
+     * @return \Symfony\Component\HttpFoundation\RedirectResponse
+     *
+     * @throws EntityNotFoundException
+     * @throws \Doctrine\DBAL\ConnectionException
+     *
+     * @Method("POST")
+     * @Route("/%eccube_admin_route%/product/product_rank/{category_id}/{product_id}/up",
+     *      name="admin_product_product_rank_up",
+     *      requirements={"category_id":"\d+", "product_id":"\d+"}
+     * )
+     */
+    public function up($category_id, $product_id)
     {
-        $this->isTokenValid($app);
+        $this->isTokenValid();
 
-        $em = $app['orm.em'];
-        $TargetProductCategory = $em->getRepository('\Eccube\Entity\ProductCategory')
-            ->findOneBy(array('category_id' => $category_id, 'product_id' => $product_id));
+        /* @var $TargetProductCategory ProductCategory */
+        $TargetProductCategory = $this->productCategoryRepository->findOneBy([
+            'category_id' => $category_id,
+            'product_id' => $product_id
+        ]);
         if (!$TargetProductCategory) {
             throw new EntityNotFoundException();
         }
 
-        $status = $app['eccube.plugin.product_rank.repository.product_rank']
-            ->renumber($TargetProductCategory->getCategory());
+        $status = $this->productRankRepository->renumber($TargetProductCategory->getCategory());
 
         if ($status === true) {
-            $status = $app['eccube.plugin.product_rank.repository.product_rank']
-                ->up($TargetProductCategory);
+            $status = $this->productRankRepository->up($TargetProductCategory);
         }
 
         if ($status === true) {
-            $app->addSuccess('admin.product_rank.up.complete', 'admin');
+            $this->addSuccess('admin.product_rank.up.complete', 'admin');
         } else {
-            $app->addError('admin.product_rank.up.error', 'admin');
+            $this->addError('admin.product_rank.up.error', 'admin');
         }
 
-        return $app->redirect($app->url('admin_product_product_rank_show', array('category_id' => $category_id)));
+        return $this->redirectToRoute('admin_product_product_rank_show', ['category_id' => $category_id]);
     }
 
-    public function down(Application $app, Request $request, $category_id, $product_id)
+    /**
+     * Increase rank of product
+     *
+     * @param $category_id
+     * @param $product_id
+     *
+     * @return \Symfony\Component\HttpFoundation\RedirectResponse
+     *
+     * @throws EntityNotFoundException
+     * @throws \Doctrine\DBAL\ConnectionException
+     *
+     * @Method("POST")
+     * @Route("/%eccube_admin_route%/product/product_rank/{category_id}/{product_id}/down",
+     *      name="admin_product_product_rank_down",
+     *      requirements={"category_id":"\d+", "product_id":"\d+"}
+     * )
+     */
+    public function down($category_id, $product_id)
     {
-        $this->isTokenValid($app);
+        $this->isTokenValid();
 
-        $em = $app['orm.em'];
-        $repos = $em->getRepository('\Eccube\Entity\ProductCategory');
-
-        /* @var $ProductCategory \Eccube\Entity\ProductCategory */
-        $TargetProductCategory = $repos->findOneBy(array('category_id' => $category_id, 'product_id' => $product_id));
+        /* @var $TargetProductCategory ProductCategory */
+        $TargetProductCategory = $this->productCategoryRepository->findOneBy([
+            'category_id' => $category_id,
+            'product_id' => $product_id
+        ]);
         if (!$TargetProductCategory) {
             throw new EntityNotFoundException();
         }
 
-        $status = $app['eccube.plugin.product_rank.repository.product_rank']
-            ->renumber($TargetProductCategory->getCategory());
+        $status = $this->productRankRepository->renumber($TargetProductCategory->getCategory());
 
         if ($status === true) {
-            $status = $app['eccube.plugin.product_rank.repository.product_rank']
-                ->down($TargetProductCategory);
+            $status = $this->productRankRepository->down($TargetProductCategory);
         }
 
         if ($status === true) {
-            $app->addSuccess('admin.product_rank.down.complete', 'admin');
+            $this->addSuccess('admin.product_rank.down.complete', 'admin');
         } else {
-            $app->addError('admin.product_rank.down.error', 'admin');
+            $this->addError('admin.product_rank.down.error', 'admin');
         }
 
-        return $app->redirect($app->url('admin_product_product_rank_show', array('category_id' => $category_id)));
+        return $this->redirectToRoute('admin_product_product_rank_show', ['category_id' => $category_id]);
     }
 
 
-    public function moveRank(Application $app, Request $request)
+    /**
+     * Moving rank by ajax
+     *
+     * @param Request $request
+     *
+     * @return bool|RedirectResponse|JsonResponse
+     *
+     * @throws EntityNotFoundException
+     * @throws \Doctrine\DBAL\ConnectionException
+     *
+     * @Method("POST")
+     * @Route("/%eccube_admin_route%/product/product_rank/moveRank",
+     *      name="admin_product_product_rank_move_rank",
+     *      requirements={"category_id":"\d+", "product_id":"\d+", "position":"\d+"}
+     * )
+     */
+    public function moveRank(Request $request)
     {
         $category_id = intval($request->get('category_id'));
         $product_id = intval($request->get('product_id'));
         $position = intval($request->get('position'));
 
-        $em = $app['orm.em'];
+        /** @var Category $Category */
+        $Category = $this->categoryRepository->find($category_id);
+        $status = $this->productRankRepository->renumber($Category);
 
-        $Category = $app['eccube.repository.category']->find($category_id);
-        $status = $app['eccube.plugin.product_rank.repository.product_rank']
-            ->renumber($Category);
-
-        $repos = $em->getRepository('\Eccube\Entity\ProductCategory');
-
-        $TargetProductCategory = $repos->findOneBy(array('category_id' => $category_id, 'product_id' => $product_id));
+        /** @var ProductCategory $TargetProductCategory */
+        $TargetProductCategory = $this->productCategoryRepository->findOneBy([
+            'category_id' => $category_id,
+            'product_id' => $product_id
+        ]);
         if (!$TargetProductCategory) {
             throw new EntityNotFoundException();
         }
         if ($status === true) {
-            $status = $app['eccube.plugin.product_rank.repository.product_rank']
-                ->moveRank($TargetProductCategory, $position);
+            $status = $this->productRankRepository->moveRank($TargetProductCategory, $position);
         }
 
         if ($request->isXmlHttpRequest()) {
-            return $status;
+            return new JsonResponse($status);
         } else {
             if ($status === true) {
-                $app->addSuccess('admin.product_rank.down.complete', 'admin');
+                $this->addSuccess('admin.product_rank.move_rank.complete', 'admin');
             } else {
-                $app->addError('admin.product_rank.down.error', 'admin');
+                $this->addError('admin.product_rank.move_rank.error', 'admin');
             }
 
-            return $app->redirect($app->url('admin_product_product_rank_show', array('category_id' => $category_id)));
+            return $this->redirectToRoute('admin_product_product_rank_show', ['category_id' => $category_id]);
         }
     }
 

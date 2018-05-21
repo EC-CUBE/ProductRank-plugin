@@ -1,9 +1,3 @@
 name: 商品並び替えプラグイン
 code: ProductRank
 version: 0.0.1
-service: 
-    - ProductRankServiceProvider
-orm.path:
-    - /Resource/doctrine
-migration.path:
-    - /Migration

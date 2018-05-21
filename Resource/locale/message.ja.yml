@@ -1,6 +1,0 @@
-admin.product_rank.up.complete: 商品を上へ移動しました。
-admin.product_rank.up.error: 商品を上へ移動できませんでした。
-admin.product_rank.down.complete: 商品を下へ移動しました。
-admin.product_rank.down.error: 商品を下へ移動できませんでした。
-admin.product_rank.move_rank.error: 商品を並べ替えられませんでした。
-admin.product_rank.move_rank.complate: 商品を並べ替えました。

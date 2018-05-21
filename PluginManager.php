@@ -14,76 +14,99 @@ namespace Plugin\ProductRank;
 use Eccube\Application;
 use Eccube\Entity\Master\ProductListOrderBy;
 use Eccube\Plugin\AbstractPluginManager;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use Doctrine\ORM\EntityManagerInterface;
+use Eccube\Repository\Master\ProductListOrderByRepository;
 
 class PluginManager extends AbstractPluginManager
 {
-
-    public function __construct()
+    /**
+     * Execute uninstall
+     *
+     * @param array $config
+     * @param Application|null $app
+     * @param ContainerInterface $container
+     * @throws \Doctrine\ORM\NoResultException
+     * @throws \Doctrine\ORM\NonUniqueResultException
+     */
+    public function uninstall($config = [], Application $app = null, ContainerInterface $container)
     {
-    }
-
-    public function install($config, $app)
-    {
-    }
-
-    public function uninstall($config, $app)
-    {
-        $this->removeProductListOrderBy($app);
-    }
-
-    public function enable($config, $app)
-    {
-        $this->addProductListOrderBy($app);
-    }
-
-    public function disable($config, $app)
-    {
-        $this->removeProductListOrderBy($app);
-    }
-
-    public function update($config, $app)
-    {
-
+        $this->removeProductListOrderBy($container);
     }
 
     /**
-     * @param Application $app
+     * Enable
+     *
+     * @param array $config
+     * @param Application|null $app
+     * @param ContainerInterface $container
      */
-    private function addProductListOrderBy(Application $app) {
-        // this up() migration is auto-generated, please modify it to your needs
+    public function enable($config = [], Application $app = null, ContainerInterface $container)
+    {
+        $this->addProductListOrderBy($container);
+    }
+
+    /**
+     * Execute disable
+     *
+     * @param array $config
+     * @param Application|null $app
+     * @param ContainerInterface $container
+     * @throws \Doctrine\ORM\NoResultException
+     * @throws \Doctrine\ORM\NonUniqueResultException
+     */
+    public function disable($config = [], Application $app = null, ContainerInterface $container)
+    {
+        $this->removeProductListOrderBy($container);
+    }
+
+    /**
+     * Add product list order by
+     *
+     * @param ContainerInterface $container
+     */
+    private function addProductListOrderBy(ContainerInterface $container)
+    {
+        /** @var EntityManagerInterface $entityManager */
+        $entityManager = $container->get('doctrine.orm.entity_manager');
+
+        /** @var ProductListOrderByRepository $productListOrderByRepository */
+        $productListOrderByRepository = $entityManager->getRepository('Eccube\Entity\Master\ProductListOrderBy');
+        $ProductListOrderByMax = $productListOrderByRepository->findOneBy([], ['sort_no' => 'DESC']);
 
         /** @var \Eccube\Entity\Master\ProductListOrderBy $plob */
         $ProductListOrderBy = new ProductListOrderBy();
-        $ProductListOrderBy->setId(0);
-        $ProductListOrderBy->setName('未選択');
-        $ProductListOrderBy->setRank(-1);
+        $ProductListOrderBy->setId($container->getParameter('plugin.product_rank.product_list_order_id'));
+        $ProductListOrderBy->setName($container->getParameter('plugin.product_rank.product_list_order_name'));
+        $ProductListOrderBy->setSortNo($ProductListOrderByMax->getSortNo() + 1);
 
-        /** @var \Doctrine\ORM\EntityManager $em */
-        $em = $app['orm.em'];
-        $em->persist($ProductListOrderBy);
-        $em->flush();
+        $entityManager->persist($ProductListOrderBy);
+        $entityManager->flush();
     }
 
     /**
-     * @param Application $app
+     * Remove product list order by
+     *
+     * @param ContainerInterface $container
+     * @throws \Doctrine\ORM\NoResultException
+     * @throws \Doctrine\ORM\NonUniqueResultException
      */
-    private function removeProductListOrderBy(Application $app) {
-        // this down() migration is auto-generated, please modify it to your needs
+    private function removeProductListOrderBy(ContainerInterface $container)
+    {
+        /** @var EntityManagerInterface $entityManager */
+        $entityManager = $container->get('doctrine.orm.entity_manager');
 
-        /** @var \Doctrine\ORM\EntityManager $em */
-        $em = $app['orm.em'];
-        $repos = $em->getRepository('Eccube\Entity\Master\ProductListOrderBy');
+        /** @var ProductListOrderByRepository $repos */
+        $repos = $entityManager->getRepository('Eccube\Entity\Master\ProductListOrderBy');
         $ProductListOrderBy = $repos->createQueryBuilder('plob')
             ->where('plob.id = :id')
             ->getQuery()
-            ->setParameters(array(
-                'id' => 0,
-            ))
+            ->setParameters(['id' => $container->getParameter('plugin.product_rank.product_list_order_id'),])
             ->getSingleResult();
 
         if ($ProductListOrderBy) {
-            $em->remove($ProductListOrderBy);
-            $em->flush();
+            $entityManager->remove($ProductListOrderBy);
+            $entityManager->flush();
         }
     }
 
