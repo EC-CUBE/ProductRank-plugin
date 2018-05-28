@@ -17,6 +17,7 @@ use Eccube\Plugin\AbstractPluginManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Eccube\Repository\Master\ProductListOrderByRepository;
+use Doctrine\ORM\NoResultException;
 
 class PluginManager extends AbstractPluginManager
 {
@@ -98,15 +99,17 @@ class PluginManager extends AbstractPluginManager
 
         /** @var ProductListOrderByRepository $repos */
         $repos = $entityManager->getRepository('Eccube\Entity\Master\ProductListOrderBy');
-        $ProductListOrderBy = $repos->createQueryBuilder('plob')
-            ->where('plob.id = :id')
-            ->getQuery()
-            ->setParameters(['id' => $container->getParameter('plugin.product_rank.product_list_order_id'),])
-            ->getSingleResult();
+        try {
+            $ProductListOrderBy = $repos->createQueryBuilder('plob')
+                ->where('plob.id = :id')
+                ->getQuery()
+                ->setParameters(['id' => $container->getParameter('plugin.product_rank.product_list_order_id'),])
+                ->getSingleResult();
 
-        if ($ProductListOrderBy) {
             $entityManager->remove($ProductListOrderBy);
             $entityManager->flush();
+        } catch (NoResultException $e) {
+            // silence
         }
     }
 
