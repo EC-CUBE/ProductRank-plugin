@@ -122,7 +122,7 @@ class ProductRankController extends AbstractController
      * @throws EntityNotFoundException
      * @throws \Doctrine\DBAL\ConnectionException
      *
-     * @Method("POST")
+     * @Method("PUT")
      * @Route("/%eccube_admin_route%/product/product_rank/{category_id}/{product_id}/up",
      *      name="admin_product_product_rank_up",
      *      requirements={"category_id":"\d+", "product_id":"\d+"}
@@ -167,7 +167,7 @@ class ProductRankController extends AbstractController
      * @throws EntityNotFoundException
      * @throws \Doctrine\DBAL\ConnectionException
      *
-     * @Method("POST")
+     * @Method("PUT")
      * @Route("/%eccube_admin_route%/product/product_rank/{category_id}/{product_id}/down",
      *      name="admin_product_product_rank_down",
      *      requirements={"category_id":"\d+", "product_id":"\d+"}

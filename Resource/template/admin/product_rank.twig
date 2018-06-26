@@ -23,8 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 {% set menus = ['product', 'product_rank'] %}
 
-{% block title %}{{ 'admin.product_rank.move_rank.title'|trans }}{% endblock %}
-{% block sub_title %}{{ 'admin.product_rank.move_rank.sub_title'|trans }}{% endblock %}
+{% block title %}{{ 'admin.product_rank.move_rank.sub_title'|trans }}{% endblock %}
+{% block sub_title %}{{ 'admin.product_rank.move_rank.title'|trans }}{% endblock %}
 
 
 {% block javascript %}
@@ -40,14 +40,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
                 $children.each(function(index, obj) {
                     // up表示切替
                     if (index > 0) {
-                        $(this).find(".admin_product_product_rank_up").show();
+                        $(this).find(".action-up").removeClass('disabled');
                     } else {
-                        $(this).find(".admin_product_product_rank_up").hide();
+                        $(this).find(".action-up").addClass('disabled');
                     }
                     if (index < childrenMax) {
-                        $(this).find(".admin_product_product_rank_down").show();
+                        $(this).find(".action-down").removeClass('disabled');
                     } else {
-                        $(this).find(".admin_product_product_rank_down").hide();
+                        $(this).find(".action-down").addClass('disabled');
                     }
                 });
             };
