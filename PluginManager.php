@@ -77,8 +77,8 @@ class PluginManager extends AbstractPluginManager
 
         /** @var \Eccube\Entity\Master\ProductListOrderBy $plob */
         $ProductListOrderBy = new ProductListOrderBy();
-        $ProductListOrderBy->setId($container->getParameter('plugin.product_rank.product_list_order_id'));
-        $ProductListOrderBy->setName($container->getParameter('plugin.product_rank.product_list_order_name'));
+        $ProductListOrderBy->setId($container->getParameter('product_rank.product_list_order_id'));
+        $ProductListOrderBy->setName($container->getParameter('product_rank.product_list_order_name'));
         $ProductListOrderBy->setSortNo($ProductListOrderByMax->getSortNo() + 1);
 
         $entityManager->persist($ProductListOrderBy);
@@ -103,7 +103,7 @@ class PluginManager extends AbstractPluginManager
             $ProductListOrderBy = $repos->createQueryBuilder('plob')
                 ->where('plob.id = :id')
                 ->getQuery()
-                ->setParameters(['id' => $container->getParameter('plugin.product_rank.product_list_order_id'),])
+                ->setParameters(['id' => $container->getParameter('product_rank.product_list_order_id'),])
                 ->getSingleResult();
 
             $entityManager->remove($ProductListOrderBy);

@@ -19,12 +19,12 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #}
-{% extends '@admin/styleguide_frame.twig' %}
+{% extends '@admin/default_frame.twig' %}
 
 {% set menus = ['product', 'product_rank'] %}
 
-{% block title %}{{ 'admin.product_rank.move_rank.sub_title'|trans }}{% endblock %}
-{% block sub_title %}{{ 'admin.product_rank.move_rank.title'|trans }}{% endblock %}
+{% block title %}{{ 'product_rank.admin.move_rank.sub_title'|trans }}{% endblock %}
+{% block sub_title %}{{ 'product_rank.admin.move_rank.title'|trans }}{% endblock %}
 
 
 {% block javascript %}
@@ -79,7 +79,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
                     console.log(data);
                     $(".modal-backdrop").remove();
                     if (data != true) {
-                        alert('{{ 'admin.product_rank.move_rank.error'|trans }}');
+                        alert('{{ 'product_rank.admin.move_rank.error'|trans }}');
                         $("#product_rank_list > .sortable-container").sortable('cancel');
                     } else {
                         setupContextMenu(window.$children);
@@ -87,7 +87,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
                 }).fail(function() {
                     console.log('fail');
                     $(".modal-backdrop").remove();
-                    alert('{{ 'admin.product_rank.move_rank.error'|trans }}');
+                    alert('{{ 'product_rank.admin.move_rank.error'|trans }}');
                     $("#product_rank_list > .sortable-container").sortable('cancel');
                 });
             };
@@ -117,7 +117,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
                         <ol class="breadcrumb mb-2 p-0">
                             <li class="breadcrumb-item">
                                 <a href="{{ url('admin_product_category') }}">
-                                    {{ 'admin.product_rank.move_rank.all_category'|trans }}
+                                    {{ 'product_rank.admin.move_rank.all_category'|trans }}
                                 </a>
                             </li>
                             {% for ParentCategory in TargetCategory.path %}
@@ -183,7 +183,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
                                                         <div class="form-group">
                                                             <input class="product_rank_move_rank_input form-control" type="text" />
                                                         </div>
-                                                        <a class="btn btn-default product_rank_move_rank_anchor" href="javascript:void(0);">{{ 'admin.product_rank.move_rank.th'|trans }}</a>
+                                                        <a class="btn btn-default product_rank_move_rank_anchor" href="javascript:void(0);">{{ 'product_rank.admin.move_rank.th'|trans }}</a>
                                                     </div>
                                                 </div>
                                             </div>
@@ -196,7 +196,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
                 {% else %}
                     <div class="card rounded border-0">
                         <div class="card-body p-4">
-                            <div class="text-center text-muted">{{ 'admin.product_rank.move_rank.select_category'|trans }}</div>
+                            <div class="text-center text-muted">{{ 'product_rank.admin.move_rank.select_category'|trans }}</div>
                         </div>
                     </div>
                 {% endif %}

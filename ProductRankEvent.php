@@ -2,12 +2,10 @@
 namespace Plugin\ProductRank;
 
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Eccube\Event\EccubeEvents;
-use Eccube\Event\EventArgs;
 use Plugin\ProductRank\Event\Event;
 use Knp\Component\Pager\Event\ItemsEvent;
 
-class EventSubscriber implements EventSubscriberInterface
+class ProductRankEvent implements EventSubscriberInterface
 {
     /**
      * @var Event
@@ -41,7 +39,7 @@ class EventSubscriber implements EventSubscriberInterface
     /**
      * Modify options of pagination
      *
-     * @param EventArgs $event
+     * @param ItemsEvent $event
      */
     public function onPaginationIterator(ItemsEvent $event)
     {

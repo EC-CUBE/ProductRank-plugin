@@ -1,6 +1,6 @@
 parameters:
-    plugin.product_rank.product_list_order_id: 19991
-    plugin.product_rank.product_list_order_name: '未選択'
+    product_rank.product_list_order_id: 19991
+    product_rank.product_list_order_name: '未選択'
 
 services:
     Plugin\ProductRank\Entity\ProductRankCustomizer:

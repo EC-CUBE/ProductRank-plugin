@@ -148,9 +148,9 @@ class ProductRankController extends AbstractController
         }
 
         if ($status === true) {
-            $this->addSuccess('admin.product_rank.up.complete', 'admin');
+            $this->addSuccess('product_rank.admin.up.complete', 'admin');
         } else {
-            $this->addError('admin.product_rank.up.error', 'admin');
+            $this->addError('product_rank.admin.up.error', 'admin');
         }
 
         return $this->redirectToRoute('admin_product_product_rank_show', ['category_id' => $category_id]);
@@ -193,9 +193,9 @@ class ProductRankController extends AbstractController
         }
 
         if ($status === true) {
-            $this->addSuccess('admin.product_rank.down.complete', 'admin');
+            $this->addSuccess('product_rank.admin.down.complete', 'admin');
         } else {
-            $this->addError('admin.product_rank.down.error', 'admin');
+            $this->addError('product_rank.admin.down.error', 'admin');
         }
 
         return $this->redirectToRoute('admin_product_product_rank_show', ['category_id' => $category_id]);
@@ -244,9 +244,9 @@ class ProductRankController extends AbstractController
             return new JsonResponse($status);
         } else {
             if ($status === true) {
-                $this->addSuccess('admin.product_rank.move_rank.complete', 'admin');
+                $this->addSuccess('product_rank.admin.move_rank.complete', 'admin');
             } else {
-                $this->addError('admin.product_rank.move_rank.error', 'admin');
+                $this->addError('product_rank.admin.move_rank.error', 'admin');
             }
 
             return $this->redirectToRoute('admin_product_product_rank_show', ['category_id' => $category_id]);

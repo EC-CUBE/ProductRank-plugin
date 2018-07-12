@@ -40,7 +40,7 @@ class ProductRankCustomizer extends OrderByCustomizer
         }
         /** @var ProductListOrderBy $OrderBy */
         $OrderBy = $params['orderby'];
-        if ($OrderBy->getId() != $this->eccubeConfig->get('plugin.product_rank.product_list_order_id')) {
+        if ($OrderBy->getId() != $this->eccubeConfig->get('product_rank.product_list_order_id')) {
             return [];
         }
 
