@@ -1,13 +1,15 @@
 <?php
+
 /*
-* This file is part of EC-CUBE
-*
-* Copyright(c) 2000-2015 LOCKON CO.,LTD. All Rights Reserved.
-* http://www.lockon.co.jp/
-*
-* For the full copyright and license information, please view the LICENSE
-* file that was distributed with this source code.
-*/
+ * This file is part of EC-CUBE
+ *
+ * Copyright(c) LOCKON CO.,LTD. All Rights Reserved.
+ *
+ * http://www.lockon.co.jp/
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace Plugin\ProductRank;
 
@@ -27,6 +29,7 @@ class PluginManager extends AbstractPluginManager
      * @param array $config
      * @param Application|null $app
      * @param ContainerInterface $container
+     *
      * @throws \Doctrine\ORM\NoResultException
      * @throws \Doctrine\ORM\NonUniqueResultException
      */
@@ -53,6 +56,7 @@ class PluginManager extends AbstractPluginManager
      * @param array $config
      * @param Application|null $app
      * @param ContainerInterface $container
+     *
      * @throws \Doctrine\ORM\NoResultException
      * @throws \Doctrine\ORM\NonUniqueResultException
      */
@@ -89,6 +93,7 @@ class PluginManager extends AbstractPluginManager
      * Remove product list order by
      *
      * @param ContainerInterface $container
+     *
      * @throws \Doctrine\ORM\NoResultException
      * @throws \Doctrine\ORM\NonUniqueResultException
      */
@@ -103,7 +108,7 @@ class PluginManager extends AbstractPluginManager
             $ProductListOrderBy = $repos->createQueryBuilder('plob')
                 ->where('plob.id = :id')
                 ->getQuery()
-                ->setParameters(['id' => $container->getParameter('product_rank.product_list_order_id'),])
+                ->setParameters(['id' => $container->getParameter('product_rank.product_list_order_id')])
                 ->getSingleResult();
 
             $entityManager->remove($ProductListOrderBy);
@@ -112,5 +117,4 @@ class PluginManager extends AbstractPluginManager
             // silence
         }
     }
-
 }

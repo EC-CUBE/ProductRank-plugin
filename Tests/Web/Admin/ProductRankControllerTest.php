@@ -1,8 +1,10 @@
 <?php
-/**
+
+/*
  * This file is part of EC-CUBE
  *
- * Copyright(c) 2000-2015 LOCKON CO.,LTD. All Rights Reserved.
+ * Copyright(c) LOCKON CO.,LTD. All Rights Reserved.
+ *
  * http://www.lockon.co.jp/
  *
  * For the full copyright and license information, please view the LICENSE
@@ -14,10 +16,8 @@ namespace Plugin\ProductRank\Tests\Web\Admin;
 use Eccube\Tests\Web\Admin\AbstractAdminWebTestCase;
 use Eccube\Repository\ProductCategoryRepository;
 
-
 class ProductRankControllerTest extends AbstractAdminWebTestCase
 {
-
     /**
      * @var ProductCategoryRepository
      */
@@ -84,13 +84,13 @@ class ProductRankControllerTest extends AbstractAdminWebTestCase
 
         $ProductCategory = $this->productCategoryRepository->find([
             'product_id' => $Product->getId(),
-            'category_id' => $categoryId
+            'category_id' => $categoryId,
         ]);
 
         // WHEN
         $url = $this->generateUrl('admin_product_product_rank_down', [
             'category_id' => $categoryId,
-            'product_id' => $Product->getId()
+            'product_id' => $Product->getId(),
         ]);
         $this->client->request('PUT', $url);
 
@@ -100,7 +100,7 @@ class ProductRankControllerTest extends AbstractAdminWebTestCase
         $this->assertTrue($this->client->getResponse()->isRedirect($rUrl));
 
         // verify data
-        $ProductCategories = $this->productCategoryRepository->findBy(array('category_id' => $categoryId));
+        $ProductCategories = $this->productCategoryRepository->findBy(['category_id' => $categoryId]);
         $max = count($ProductCategories);
         $this->expected = $max - 1;
 
@@ -119,7 +119,7 @@ class ProductRankControllerTest extends AbstractAdminWebTestCase
         // WHEN
         $url = $this->generateUrl('admin_product_product_rank_up', [
             'category_id' => $categoryId,
-            'product_id' => $ProductCategory->getProductId()
+            'product_id' => $ProductCategory->getProductId(),
         ]);
         $this->client->request('PUT', $url);
 
@@ -145,7 +145,7 @@ class ProductRankControllerTest extends AbstractAdminWebTestCase
         $url = $this->generateUrl('admin_product_product_rank_move_rank', [
             'category_id' => $categoryId,
             'product_id' => $Product->getId(),
-            'position' => $inputRank
+            'position' => $inputRank,
         ]);
         $this->client->request('POST',
             $url,
@@ -153,7 +153,7 @@ class ProductRankControllerTest extends AbstractAdminWebTestCase
                 'category_id' => $categoryId,
                 'product_id' => $Product->getId(),
                 'position' => $inputRank,
-                '_token' => 'dummy'
+                '_token' => 'dummy',
             ]
         );
 
@@ -166,7 +166,7 @@ class ProductRankControllerTest extends AbstractAdminWebTestCase
 
         $ProductCategory = $this->productCategoryRepository->find([
             'product_id' => $Product->getId(),
-            'category_id' => $categoryId
+            'category_id' => $categoryId,
         ]);
         $this->actual = $ProductCategory->getSortNo();
         $this->verify();
@@ -181,14 +181,14 @@ class ProductRankControllerTest extends AbstractAdminWebTestCase
         $productId = $Product->getId();
         $ProductCategory = $this->productCategoryRepository->find([
             'product_id' => $productId,
-            'category_id' => $categoryId
+            'category_id' => $categoryId,
         ]);
 
         // WHEN
         $url = $this->generateUrl('admin_product_product_rank_move_rank', [
             'category_id' => $categoryId,
             'product_id' => $productId,
-            'position' => $inputRank
+            'position' => $inputRank,
         ]);
         $this->client->request(
             'POST',

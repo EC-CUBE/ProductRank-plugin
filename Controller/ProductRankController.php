@@ -1,13 +1,15 @@
 <?php
+
 /*
-* This file is part of EC-CUBE
-*
-* Copyright(c) 2000-2015 LOCKON CO.,LTD. All Rights Reserved.
-* http://www.lockon.co.jp/
-*
-* For the full copyright and license information, please view the LICENSE
-* file that was distributed with this source code.
-*/
+ * This file is part of EC-CUBE
+ *
+ * Copyright(c) LOCKON CO.,LTD. All Rights Reserved.
+ *
+ * http://www.lockon.co.jp/
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace Plugin\ProductRank\Controller;
 
@@ -63,6 +65,7 @@ class ProductRankController extends AbstractController
      * Product rank management
      *
      * @param null $category_id
+     *
      * @return mixed
      *
      * @throws EntityNotFoundException
@@ -135,7 +138,7 @@ class ProductRankController extends AbstractController
         /* @var $TargetProductCategory ProductCategory */
         $TargetProductCategory = $this->productCategoryRepository->findOneBy([
             'category_id' => $category_id,
-            'product_id' => $product_id
+            'product_id' => $product_id,
         ]);
         if (!$TargetProductCategory) {
             throw new EntityNotFoundException();
@@ -180,7 +183,7 @@ class ProductRankController extends AbstractController
         /* @var $TargetProductCategory ProductCategory */
         $TargetProductCategory = $this->productCategoryRepository->findOneBy([
             'category_id' => $category_id,
-            'product_id' => $product_id
+            'product_id' => $product_id,
         ]);
         if (!$TargetProductCategory) {
             throw new EntityNotFoundException();
@@ -200,7 +203,6 @@ class ProductRankController extends AbstractController
 
         return $this->redirectToRoute('admin_product_product_rank_show', ['category_id' => $category_id]);
     }
-
 
     /**
      * Moving rank by ajax
@@ -231,7 +233,7 @@ class ProductRankController extends AbstractController
         /** @var ProductCategory $TargetProductCategory */
         $TargetProductCategory = $this->productCategoryRepository->findOneBy([
             'category_id' => $category_id,
-            'product_id' => $product_id
+            'product_id' => $product_id,
         ]);
         if (!$TargetProductCategory) {
             throw new EntityNotFoundException();
@@ -252,5 +254,4 @@ class ProductRankController extends AbstractController
             return $this->redirectToRoute('admin_product_product_rank_show', ['category_id' => $category_id]);
         }
     }
-
 }

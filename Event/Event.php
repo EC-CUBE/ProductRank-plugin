@@ -1,4 +1,16 @@
 <?php
+
+/*
+ * This file is part of EC-CUBE
+ *
+ * Copyright(c) LOCKON CO.,LTD. All Rights Reserved.
+ *
+ * http://www.lockon.co.jp/
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Plugin\ProductRank\Event;
 
 use Knp\Component\Pager\Event\ItemsEvent;
@@ -8,6 +20,7 @@ class Event
 {
     /**
      * Need to add wrap-queries into pagination
+     *
      * @see https://github.com/KnpLabs/knp-components/blob/master/doc/pager/config.md
      *
      * @param ItemsEvent $event
@@ -23,6 +36,7 @@ class Event
         foreach ($orderByParts as $orderBy) {
             if (in_array('pct.sort_no DESC', $orderBy->getParts())) {
                 $event->options['wrap-queries'] = true;
+
                 return;
             }
         }
