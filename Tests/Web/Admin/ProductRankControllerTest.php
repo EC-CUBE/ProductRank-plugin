@@ -92,10 +92,11 @@ class ProductRankControllerTest extends AbstractAdminWebTestCase
             'category_id' => $categoryId,
             'product_id' => $Product->getId()
         ]);
-        $this->client->request('POST', $url);
+        $this->client->request('PUT', $url);
 
         // check redirect
         $rUrl = $this->generateUrl('admin_product_product_rank_show', ['category_id' => $categoryId]);
+
         $this->assertTrue($this->client->getResponse()->isRedirect($rUrl));
 
         // verify data
@@ -120,7 +121,7 @@ class ProductRankControllerTest extends AbstractAdminWebTestCase
             'category_id' => $categoryId,
             'product_id' => $ProductCategory->getProductId()
         ]);
-        $this->client->request('POST', $url);
+        $this->client->request('PUT', $url);
 
         // check redirect
         $rUrl = $this->generateUrl('admin_product_product_rank_show', ['category_id' => $categoryId]);
