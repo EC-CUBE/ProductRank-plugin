@@ -1,0 +1,9 @@
+{
+  "name": "商品並び替えプラグイン",
+  "version": "1.0.0",
+  "description": "商品並び替えプラグイン",
+  "type": "eccube-plugin",
+  "extra": {
+    "code": "ProductRank"
+  }
+}

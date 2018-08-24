@@ -17,11 +17,10 @@ use Eccube\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Doctrine\ORM\EntityNotFoundException;
 use Eccube\Repository\CategoryRepository;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use Symfony\Component\Routing\Annotation\Route;
 use Eccube\Entity\Category;
 use Plugin\ProductRank\Repository\ProductRankRepository;
 use Eccube\Repository\ProductCategoryRepository;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
 use Eccube\Entity\ProductCategory;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -103,6 +102,14 @@ class ProductRankController extends AbstractController
         $TopCategories = $this->categoryRepository->findBy(['Parent' => null], ['sort_no' => 'DESC']);
         $category_count = $this->categoryRepository->getTotalCount();
 
+        $Ids = [];
+        if ($Parent && $Parent->getParents()) {
+            foreach ($Parent->getParents() as $item) {
+                $Ids[] = $item['id'];
+            }
+        }
+        $Ids[] = intval($category_id);
+
         return [
             'Children' => $Children,
             'Parent' => $Parent,
@@ -111,6 +118,7 @@ class ProductRankController extends AbstractController
             'TargetCategory' => $TargetCategory,
             'category_count' => $category_count,
             'category_id' => $category_id,
+            'Ids' => $Ids,
         ];
     }
 
@@ -125,10 +133,10 @@ class ProductRankController extends AbstractController
      * @throws EntityNotFoundException
      * @throws \Doctrine\DBAL\ConnectionException
      *
-     * @Method("PUT")
      * @Route("/%eccube_admin_route%/product/product_rank/{category_id}/{product_id}/up",
-     *      name="admin_product_product_rank_up",
-     *      requirements={"category_id":"\d+", "product_id":"\d+"}
+     *     name="admin_product_product_rank_up",
+     *     requirements={"category_id":"\d+", "product_id":"\d+"},
+     *     methods={"PUT"}
      * )
      */
     public function up($category_id, $product_id)
@@ -170,10 +178,10 @@ class ProductRankController extends AbstractController
      * @throws EntityNotFoundException
      * @throws \Doctrine\DBAL\ConnectionException
      *
-     * @Method("PUT")
      * @Route("/%eccube_admin_route%/product/product_rank/{category_id}/{product_id}/down",
-     *      name="admin_product_product_rank_down",
-     *      requirements={"category_id":"\d+", "product_id":"\d+"}
+     *     name="admin_product_product_rank_down",
+     *     requirements={"category_id":"\d+", "product_id":"\d+"},
+     *     methods={"PUT"}
      * )
      */
     public function down($category_id, $product_id)
@@ -214,10 +222,10 @@ class ProductRankController extends AbstractController
      * @throws EntityNotFoundException
      * @throws \Doctrine\DBAL\ConnectionException
      *
-     * @Method("POST")
      * @Route("/%eccube_admin_route%/product/product_rank/moveRank",
-     *      name="admin_product_product_rank_move_rank",
-     *      requirements={"category_id":"\d+", "product_id":"\d+", "position":"\d+"}
+     *     name="admin_product_product_rank_move_rank",
+     *     requirements={"category_id":"\d+", "product_id":"\d+", "position":"\d+"},
+     *     methods={"POST"}
      * )
      */
     public function moveRank(Request $request)
