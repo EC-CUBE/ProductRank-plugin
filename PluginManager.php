@@ -26,14 +26,13 @@ class PluginManager extends AbstractPluginManager
     /**
      * Execute uninstall
      *
-     * @param array $config
-     * @param Application|null $app
+     * @param array $meta
      * @param ContainerInterface $container
      *
      * @throws \Doctrine\ORM\NoResultException
      * @throws \Doctrine\ORM\NonUniqueResultException
      */
-    public function uninstall($config = [], Application $app = null, ContainerInterface $container)
+    public function uninstall(array $meta, ContainerInterface $container)
     {
         $this->removeProductListOrderBy($container);
     }
@@ -41,11 +40,10 @@ class PluginManager extends AbstractPluginManager
     /**
      * Enable
      *
-     * @param array $config
-     * @param Application|null $app
+     * @param array $meta
      * @param ContainerInterface $container
      */
-    public function enable($config = [], Application $app = null, ContainerInterface $container)
+    public function enable(array $meta, ContainerInterface $container)
     {
         $this->addProductListOrderBy($container);
     }
@@ -53,14 +51,13 @@ class PluginManager extends AbstractPluginManager
     /**
      * Execute disable
      *
-     * @param array $config
-     * @param Application|null $app
+     * @param array $meta
      * @param ContainerInterface $container
      *
      * @throws \Doctrine\ORM\NoResultException
      * @throws \Doctrine\ORM\NonUniqueResultException
      */
-    public function disable($config = [], Application $app = null, ContainerInterface $container)
+    public function disable(array $meta, ContainerInterface $container)
     {
         $this->removeProductListOrderBy($container);
     }
