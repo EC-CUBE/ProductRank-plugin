@@ -13,7 +13,6 @@
 
 namespace Plugin\ProductRank;
 
-use Eccube\Application;
 use Eccube\Entity\Master\ProductListOrderBy;
 use Eccube\Plugin\AbstractPluginManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
