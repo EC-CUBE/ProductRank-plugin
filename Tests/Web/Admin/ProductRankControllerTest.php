@@ -64,15 +64,15 @@ class ProductRankControllerTest extends AbstractAdminWebTestCase
     {
         return [
             [null, 'カテゴリを選択してください。'],
-            [1, 'キッチンツール'],
-            [2, 'インテリア'],
-            [2, 'カテゴリを選択してください。'],
-            [3, '食器'],
-            [3, 'カテゴリを選択してください。'],
-            [4, '調理器具'],
-            [4, 'パーコレーター'],
-            [5, 'フォーク'],
-            [5, 'ディナーフォーク'],
+            [1, 'ジェラート'],
+            [2, '新入荷'],
+            [2, 'チェリーアイスサンド'],
+            [3, '彩のデザート'],
+            [3, '彩のジェラートCUBE'],
+            [4, 'CUBE'],
+            [4, '彩のジェラートCUBE'],
+            [5, 'アイスサンド'],
+            [5, 'チェリーアイスサンド'],
         ];
     }
 
@@ -104,7 +104,7 @@ class ProductRankControllerTest extends AbstractAdminWebTestCase
         $max = count($ProductCategories);
         $this->expected = $max - 1;
 
-        $this->actual = $ProductCategory->getSortNo();
+        $this->actual = $ProductCategory->getProductRankSortNo();
         $this->verify();
     }
 
@@ -112,9 +112,16 @@ class ProductRankControllerTest extends AbstractAdminWebTestCase
     {
         // GIVE
         $categoryId = 6;
-        $this->createProduct('Product003');
-        $ProductCategory = $this->productCategoryRepository->find(['product_id' => 1, 'category_id' => $categoryId]);
-        $oldSortNo = $ProductCategory->getSortNo();
+        $Product = $this->createProduct('Product003');
+
+        $ProductCategories = $this->productCategoryRepository->findBy(['category_id' => $categoryId]);
+        $count = count($ProductCategories);
+        foreach ($ProductCategories as $pc) {
+            $pc->setProductRankSortNo($count--);
+        }
+
+        $ProductCategory = $this->productCategoryRepository->find(['product_id' => $Product->getId(), 'category_id' => $categoryId]);
+        $oldSortNo = $ProductCategory->getProductRankSortNo();
 
         // WHEN
         $url = $this->generateUrl('admin_product_product_rank_up', [
@@ -129,8 +136,7 @@ class ProductRankControllerTest extends AbstractAdminWebTestCase
 
         // verify data
         $this->expected = $oldSortNo + 1;
-
-        $this->actual = $ProductCategory->getSortNo();
+        $this->actual = $ProductCategory->getProductRankSortNo();
         $this->verify();
     }
 
@@ -168,7 +174,7 @@ class ProductRankControllerTest extends AbstractAdminWebTestCase
             'product_id' => $Product->getId(),
             'category_id' => $categoryId,
         ]);
-        $this->actual = $ProductCategory->getSortNo();
+        $this->actual = $ProductCategory->getProductRankSortNo();
         $this->verify();
     }
 
@@ -207,7 +213,7 @@ class ProductRankControllerTest extends AbstractAdminWebTestCase
         $maxRank = count($ProductCategories);
         $this->expected = $maxRank;
 
-        $this->actual = $ProductCategory->getSortNo();
+        $this->actual = $ProductCategory->getProductRankSortNo();
         $this->verify();
     }
 }

@@ -71,7 +71,7 @@ class ProductRankRepository
             ->where($qb->expr()->eq('pc.Category', ':Category'))
             ->setParameter('Category', $Category)
             ->orderBy('c.sort_no', 'DESC')
-            ->addOrderBy('pc.sort_no', 'DESC')
+            ->addOrderBy('pc.product_rank_sort_no', 'DESC')
             ->addOrderBy('p.id', 'DESC');
 
         return $qb->getQuery()->getResult();
@@ -90,22 +90,22 @@ class ProductRankRepository
     {
         $this->entityManager->getConnection()->beginTransaction();
         try {
-            $sortNo = $TargetProductCategory->getSortNo();
+            $sortNo = $TargetProductCategory->getProductRankSortNo();
 
             /** @var ProductCategory $ProductCategoryUp */
             $ProductCategoryUp = $this->productCategoryRepository
                 ->createQueryBuilder('pc')
-                ->where('pc.sort_no > :sort_no and pc.category_id = :category_id AND pc.product_id != :product_id')
+                ->where('pc.product_rank_sort_no > :sort_no and pc.category_id = :category_id AND pc.product_id != :product_id')
                 ->setParameter('sort_no', $sortNo)
                 ->setParameter('category_id', $TargetProductCategory->getCategoryId())
                 ->setParameter('product_id', $TargetProductCategory->getProductId())
-                ->orderBy('pc.sort_no', 'ASC')
+                ->orderBy('pc.product_rank_sort_no', 'ASC')
                 ->setMaxResults(1)
                 ->getQuery()
                 ->getSingleResult();
 
-            $TargetProductCategory->setSortNo($ProductCategoryUp->getSortNo());
-            $ProductCategoryUp->setSortNo($sortNo);
+            $TargetProductCategory->setProductRankSortNo($ProductCategoryUp->getProductRankSortNo());
+            $ProductCategoryUp->setProductRankSortNo($sortNo);
 
             $this->entityManager->persist($TargetProductCategory);
             $this->entityManager->persist($ProductCategoryUp);
@@ -136,22 +136,22 @@ class ProductRankRepository
     {
         $this->entityManager->getConnection()->beginTransaction();
         try {
-            $sortNo = $TargetProductCategory->getSortNo();
+            $sortNo = $TargetProductCategory->getProductRankSortNo();
 
             /** @var ProductCategory $ProductCategoryDown */
             $ProductCategoryDown = $this->productCategoryRepository
                 ->createQueryBuilder('pc')
-                ->where('pc.sort_no <= :sort_no and pc.category_id = :category_id AND pc.product_id != :product_id')
+                ->where('pc.product_rank_sort_no <= :sort_no and pc.category_id = :category_id AND pc.product_id != :product_id')
                 ->setParameter('sort_no', $sortNo)
                 ->setParameter('category_id', $TargetProductCategory->getCategoryId())
                 ->setParameter('product_id', $TargetProductCategory->getProductId())
-                ->orderBy('pc.sort_no', 'DESC')
+                ->orderBy('pc.product_rank_sort_no', 'DESC')
                 ->setMaxResults(1)
                 ->getQuery()
                 ->getSingleResult();
 
-            $TargetProductCategory->setSortNo($ProductCategoryDown->getSortNo());
-            $ProductCategoryDown->setSortNo($sortNo);
+            $TargetProductCategory->setProductRankSortNo($ProductCategoryDown->getProductRankSortNo());
+            $ProductCategoryDown->setProductRankSortNo($sortNo);
 
             $this->entityManager->persist($TargetProductCategory);
             $this->entityManager->persist($ProductCategoryDown);
@@ -189,7 +189,7 @@ class ProductRankRepository
                     'category_id' => $ProductCategory->getCategoryId(),
                     'product_id' => $ProductCategory->getProductId(),
                 ]);
-                $ProductCategory->setSortNo($sortNo);
+                $ProductCategory->setProductRankSortNo($sortNo);
                 $this->entityManager->persist($ProductCategory);
                 $sortNo--;
             }
@@ -219,19 +219,19 @@ class ProductRankRepository
     {
         $this->entityManager->getConnection()->beginTransaction();
         try {
-            $oldSortNo = $TargetProductCategory->getSortNo();
+            $oldSortNo = $TargetProductCategory->getProductRankSortNo();
 
             // 最大値取得
             $qb = $this->productCategoryRepository->createQueryBuilder('pc');
             $max = $qb
-                ->select($qb->expr()->max('pc.sort_no'))
+                ->select($qb->expr()->max('pc.product_rank_sort_no'))
                 ->where($qb->expr()->eq('pc.category_id', $TargetProductCategory->getCategoryId()))
                 ->getQuery()
                 ->getSingleScalarResult();
 
             $position = $max - ($position - 1);
             $position = max(1, $position);
-            $TargetProductCategory->setSortNo($position);
+            $TargetProductCategory->setProductRankSortNo($position);
             $status = true;
             if ($position != $oldSortNo) {
                 // 他のItemのランクを調整する
@@ -239,8 +239,8 @@ class ProductRankRepository
                     // down
                     $this->entityManager->createQueryBuilder()
                         ->update(ProductCategory::class, 'pc')
-                        ->set('pc.sort_no', 'pc.sort_no + 1')
-                        ->where('pc.sort_no <= :oldSortNo AND pc.sort_no >= :sortNo AND pc.category_id = :categoryId AND pc.product_id != :productId')
+                        ->set('pc.product_rank_sort_no', 'pc.product_rank_sort_no + 1')
+                        ->where('pc.product_rank_sort_no <= :oldSortNo AND pc.product_rank_sort_no >= :sortNo AND pc.category_id = :categoryId AND pc.product_id != :productId')
                         ->setParameter('oldSortNo', $oldSortNo)
                         ->setParameter('sortNo', $position)
                         ->setParameter('categoryId', $TargetProductCategory->getCategoryId())
@@ -251,8 +251,8 @@ class ProductRankRepository
                     // up
                     $this->entityManager->createQueryBuilder()
                         ->update(ProductCategory::class, 'pc')
-                        ->set('pc.sort_no', 'pc.sort_no - 1')
-                        ->where('pc.sort_no >= :oldSortNo AND pc.sort_no <= :sortNo AND pc.category_id = :categoryId AND pc.product_id != :productId')
+                        ->set('pc.product_rank_sort_no', 'pc.product_rank_sort_no - 1')
+                        ->where('pc.product_rank_sort_no >= :oldSortNo AND pc.product_rank_sort_no <= :sortNo AND pc.category_id = :categoryId AND pc.product_id != :productId')
                         ->setParameter('oldSortNo', $oldSortNo)
                         ->setParameter('sortNo', $position)
                         ->setParameter('categoryId', $TargetProductCategory->getCategoryId())

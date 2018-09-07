@@ -34,7 +34,7 @@ class Event
         /** @var \Doctrine\ORM\Query\Expr\OrderBy[] $orderByParts */
         $orderByParts = $event->target->getDQLPart('orderBy');
         foreach ($orderByParts as $orderBy) {
-            if (in_array('pct.sort_no DESC', $orderBy->getParts())) {
+            if (in_array('pct.product_rank_sort_no DESC', $orderBy->getParts())) {
                 $event->options['wrap-queries'] = true;
 
                 return;

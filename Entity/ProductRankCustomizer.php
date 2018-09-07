@@ -56,7 +56,7 @@ class ProductRankCustomizer extends OrderByCustomizer
         }
 
         return [
-            0 => new OrderByClause('pct.sort_no', 'DESC'),
+            0 => new OrderByClause('pct.product_rank_sort_no', 'DESC'),
         ];
     }
 
